@@ -2,6 +2,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <fstream>
+#include <iostream>
 
 Image::Image(const char* magicNumber, unsigned int width, unsigned int height)
 {
@@ -17,12 +18,24 @@ Image::Image(const char* magicNumber, unsigned int width, unsigned int height)
     this->height = height;
 }
 
-bool Image::fileExists(std::string path)
+void Image::print()
 {
-    std::ifstream file(path.c_str());
+    std::cout << "Magic number: " << this->magicNumber << std::endl;
+    std::cout << "Width: " << this->width << std::endl;
+    std::cout << "Height: " << this->height << std::endl;
+}
 
-    bool result = file.good();
-    file.close();
+const char* Image::getMagicNumber() const
+{
+    return this->magicNumber;
+}
 
-    return result;
+unsigned int Image::getWidth() const
+{
+    return this->width;
+}
+
+unsigned int Image::getHeight() const
+{
+    return this->height;
 }

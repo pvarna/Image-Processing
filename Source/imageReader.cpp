@@ -2,37 +2,46 @@
 #include "../Headers/bitMap.h"
 #include "../Headers/grayMap.h"
 #include "../Headers/pixMap.h"
+#include "../Headers/consts.h"
 #include <cstddef>
 #include <iostream>
 #include <fstream>
 
-const std::size_t EXTENSION_LENGTH = 3;
-const std::size_t MAGIC_NUMBER_LENGTH = 2;
-const std::size_t BITMAP_METADATA_COUNT = 2;
-const std::size_t GRAYMAP_PIXMAP_METADATA_COUNT = 3;
-const std::size_t DEFAULT_MAX_VALUE = 255;
-
-ImageReader::ImageReader(std::string path, Image* image)
+ImageReader::ImageReader(std::string path)
 {
     this->type = this->getTypeOfImage(path);
+
+    this->readData(path);
+}
+
+Image* ImageReader::loadImage()
+{
+    Image* image = nullptr;
 
     switch (this->type)
     {
     case ImageType::BITMAP:
-        this->loadBitMap(image);
+        image = this->loadBitMap();
         break;
 
     case ImageType::GRAYMAP:
-        this->loadGrayMap(image);
+        image = this->loadGrayMap();
         break;
 
     case ImageType::PIXMAP:
-        this->loadPixMap(image);
+        image = this->loadPixMap();
         break;
 
     default:
         throw std::invalid_argument("Invalid image format");
     }
+
+    if (!image)
+    {
+        std::cout << "FFFFFF" << std::endl;
+    }
+
+    return image;
 }
 
 bool ImageReader::isDigit(char ch)
@@ -149,7 +158,6 @@ ImageType ImageReader::getTypeOfImage(std::string path)
 
     if (!file.is_open())
     {
-        std::cout << "tuka stigash li" << std::endl;
         throw std::invalid_argument("Problem while opening the file");
     }
 
@@ -159,13 +167,13 @@ ImageType ImageReader::getTypeOfImage(std::string path)
     file.seekg(0, std::ios::beg);
     file.close();
 
-    std::cout << firstLine << std::endl;
+    //std::cout << firstLine << std::endl;
 
     std::string magicNumber = "";
     magicNumber.push_back(firstLine[0]);
     magicNumber.push_back(firstLine[1]);
 
-    std::cout << magicNumber << std::endl;
+    //std::cout << magicNumber << std::endl;
 
     if ((fileExtension == "pbm" && magicNumber != "P1") ||
         (fileExtension == "pgm" && magicNumber != "P2") ||
@@ -177,15 +185,15 @@ ImageType ImageReader::getTypeOfImage(std::string path)
     switch (magicNumber[1])
     {
     case '1':
-        std::cout << "bitmap" << std::endl;
+        //std::cout << "bitmap" << std::endl;
         return ImageType::BITMAP;
 
     case '2':
-    std::cout << "graymap" << std::endl;
+        //std::cout << "graymap" << std::endl;
         return ImageType::GRAYMAP;
 
     case '3':
-    std::cout << "pixmap" << std::endl;
+        //std::cout << "pixmap" << std::endl;
         return ImageType::PIXMAP;
     }
 
@@ -215,7 +223,8 @@ void ImageReader::readData(std::string path)
             {
                 throw std::invalid_argument("Corrupted file");
             }
-            std::cout << currentData[i] << std::endl;
+            //std::cout << currentData[i] << std::endl;
+            //std::cout << currentData[i] << " added" << std::endl;
             this->data.push_back(currentData[i]);
         }
     }
@@ -223,7 +232,7 @@ void ImageReader::readData(std::string path)
     file.close();
 }
 
-void ImageReader::loadBitMap(Image* image)
+Image* ImageReader::loadBitMap()
 {
     unsigned int width = std::stoi(this->data[0]);
     unsigned int height = std::stoi(this->data[1]);
@@ -239,20 +248,20 @@ void ImageReader::loadBitMap(Image* image)
     for (std::size_t i = 2; i < dataSize; ++i)
     {
         std::size_t currentSize = this->data[i].size();
-        for (std::size_t j = 0; j < currentSize; ++i)
+        for (std::size_t j = 0; j < currentSize; ++j)
         {
             pixels.push_back(this->data[i][j] == '1');
         }
     }
 
-    if (image)
-    {
-        delete image;
-    }
-    image = new BitMap(width, height, pixels);
+    /*std::cout << width << std::endl;
+    std::cout << height << std::endl;
+    std::cout << pixels.size() << std::endl;*/
+
+   return new BitMap(width, height, pixels);
 }
 
-void ImageReader::loadGrayMap(Image* image)
+Image* ImageReader::loadGrayMap()
 {
     unsigned int width = std::stoi(this->data[0]);
     unsigned int height = std::stoi(this->data[1]);
@@ -289,14 +298,10 @@ void ImageReader::loadGrayMap(Image* image)
         }
     }
 
-    if (image)
-    {
-        delete image;
-    }
-    image = new GrayMap(width, height, maxValue, pixels);
+    return new GrayMap(width, height, maxValue, pixels);
 }
 
-void ImageReader::loadPixMap(Image* image)
+Image* ImageReader::loadPixMap()
 {
     unsigned int width = std::stoi(this->data[0]);
     unsigned int height = std::stoi(this->data[1]);
@@ -345,9 +350,5 @@ void ImageReader::loadPixMap(Image* image)
         pixels.push_back(currentPixel);
     }
 
-    if (image)
-    {
-        delete image;
-    }
-    image = new PixMap(width, height, maxValue, pixels);   
+    return new PixMap(width, height, maxValue, pixels);   
 }

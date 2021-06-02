@@ -5,6 +5,7 @@
 
 struct RGB
 {
+public:
     unsigned int red;
     unsigned int green;
     unsigned int blue;
@@ -12,6 +13,8 @@ struct RGB
     RGB();
     RGB(unsigned int red, unsigned int green, unsigned int blue);
     RGB(std::string hexCode);
+
+    friend std::ostream& operator << (std::ostream& out, const RGB& color);
 
 private:
     char charToUpper(char ch);

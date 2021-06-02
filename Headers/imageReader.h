@@ -1,16 +1,9 @@
 #pragma once
 
 #include "image.h"
+#include "enums.h"
 #include <string>
 #include <vector>
-
-enum class ImageType
-{
-    UNKNOWN = -1,
-    BITMAP,
-    GRAYMAP,
-    PIXMAP
-};
 
 class ImageReader
 {
@@ -28,10 +21,12 @@ private:
 
     void readData(std::string path);
 
-    void loadBitMap(Image* image);
-    void loadGrayMap(Image* image);
-    void loadPixMap(Image* image);
+    Image* loadBitMap();
+    Image* loadGrayMap();
+    Image* loadPixMap();
 
 public:
-    ImageReader(std::string path, Image* image);
+    ImageReader(std::string path);
+
+    Image* loadImage();
 };

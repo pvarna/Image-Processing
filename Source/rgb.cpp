@@ -1,12 +1,8 @@
 #include "../Headers/rgb.h"
+#include "../Headers/consts.h"
 #include <cstddef>
 #include <cmath>
 #include <iostream>
-
-const std::size_t MAX_COLOR_VALUE = 255;
-const std::size_t HEX_CODE_LENGTH = 7;
-const std::size_t DIGIT_TO_HEX_LALUE_DIFFERENCE = 48;
-const std::size_t LETTER_TO_HEX_LALUE_DIFFERENCE = 55;
 
 RGB::RGB()
 {
@@ -17,7 +13,7 @@ RGB::RGB()
 
 RGB::RGB(unsigned int red, unsigned int green, unsigned int blue)
 {
-    if (red > MAX_COLOR_VALUE || green > MAX_COLOR_VALUE || blue > MAX_COLOR_VALUE)
+    if (red > DEFAULT_MAX_VALUE || green > DEFAULT_MAX_VALUE || blue > DEFAULT_MAX_VALUE)
     {
         throw std::invalid_argument("Invalid color value");
     }
@@ -110,4 +106,11 @@ unsigned int RGB::hexToDecimal(std::string hex)
     unsigned int result = static_cast<unsigned int>(decimal);
         
     return result;
+}
+
+std::ostream& operator << (std::ostream& out, const RGB& color)
+{
+    out << color.red << " " << color.green << " " << color.blue;
+
+    return out;
 }

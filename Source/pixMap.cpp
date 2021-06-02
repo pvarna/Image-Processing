@@ -7,12 +7,12 @@
 PixMap::PixMap(unsigned int width, unsigned int height, unsigned int maxValue, std::vector<RGB> pixels)
     : Image("P3", width, height)
 {
-    if (this->maxValue > DEFAULT_MAX_VALUE)
+    this->maxValue = maxValue;
+
+     if (this->maxValue > DEFAULT_MAX_VALUE)
     {
         throw std::invalid_argument("Invalid max value");
     }
-
-    this->maxValue = maxValue;
 
     std::size_t pixelsSize = pixels.size();
 
@@ -40,15 +40,23 @@ PixMap::PixMap(unsigned int width, unsigned int height, std::string hexCode)
     }
 }
 
-/*inline bool PixMap::fileExists(std::string path)
+void PixMap::print()
 {
-    std::ifstream file(path.c_str());
+    Image::print();
+    std::cout << "Max value: " << this->maxValue << std::endl;
 
-    bool result = file.good();
-    file.close();
+    std::size_t sizePixels = this->pixels.size();
 
-    return result;
-}*/
+    for (std::size_t i = 0; i < sizePixels; ++i)
+    {
+        std::cout << this->pixels[i] << std::endl;
+    }
+}
+
+unsigned int PixMap::getMaxValue() const
+{
+    return this->maxValue;
+}
 
 /*void PixMap::write(std::string path)
 {
@@ -56,7 +64,7 @@ PixMap::PixMap(unsigned int width, unsigned int height, std::string hexCode)
 
     if (fileExists(path))
     {
-        file.open(path.c_str());
+        file.open(path.c_str(), std::ios::app);
 
         if (!file.is_open())
         {
@@ -82,7 +90,8 @@ PixMap::PixMap(unsigned int width, unsigned int height, std::string hexCode)
         }
     }
 
-    file.open(path.c_str());
+    file.open(path.c_str(), std::ios::trunc);
+    file.seekp(0, std::ios::beg);
 
     if (!file.is_open())
     {
@@ -96,13 +105,18 @@ PixMap::PixMap(unsigned int width, unsigned int height, std::string hexCode)
     std::size_t sizePixels = width * height;
     for (std::size_t i = 0; i < sizePixels; ++i)
     {
-        file << this->pixels[i].red << " " << this->pixels[i].green << " " << this->pixels[i].blue << std::endl;
+        file << this->pixels[i] << std::endl;
     }
 
     file.close();
-}
-
-void PixMap::read(std::string path)
-{
-    std::cout << "Hi" << std::endl;
 }*/
+
+RGB PixMap::operator [] (std::size_t index) const
+{
+    if (index >= this->pixels.size())
+    {
+        throw std::overflow_error("Invalid index");
+    }
+
+    return this->pixels[index];
+}

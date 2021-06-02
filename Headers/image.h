@@ -1,9 +1,8 @@
 #pragma once
 
-#include <cstddef>
+#include "consts.h"
 #include <string>
 
-const std::size_t MAGIC_NUMBER_LENGHT = 2;
 
 class Image
 {
@@ -12,9 +11,14 @@ protected:
     unsigned int width;
     unsigned int height;
 
-    bool fileExists(std::string path);
-
     Image(const char* magicNumber, unsigned int width, unsigned int height);
-public:
 
+public:
+    virtual void print();
+    //virtual void write(std::string path) = 0;
+    //virtual ~Image() = default;
+
+    const char* getMagicNumber() const;
+    unsigned int getWidth() const;
+    unsigned int getHeight() const;
 };
