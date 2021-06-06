@@ -6,12 +6,12 @@
 struct RGB
 {
 public:
-    unsigned int red;
-    unsigned int green;
-    unsigned int blue;
+    int red;
+    int green;
+    int blue;
 
     RGB();
-    RGB(unsigned int red, unsigned int green, unsigned int blue);
+    RGB(int red, int green, int blue);
     RGB(std::string hexCode);
 
     friend std::ostream& operator << (std::ostream& out, const RGB& color);
@@ -23,5 +23,5 @@ private:
     bool isDigit(char ch);
     bool isHexLetter(char ch);
 
-    unsigned int hexToDecimal(std::string hex);
+    int hexToDecimal(std::string hex);
 };

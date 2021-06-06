@@ -11,10 +11,11 @@ RGB::RGB()
     this->blue = 0;
 }
 
-RGB::RGB(unsigned int red, unsigned int green, unsigned int blue)
+RGB::RGB(int red, int green, int blue)
 {
     if (red > DEFAULT_MAX_VALUE || green > DEFAULT_MAX_VALUE || blue > DEFAULT_MAX_VALUE)
     {
+        std::cout << red << " " << green << " " << blue << std::endl;
         throw std::invalid_argument("Invalid color value");
     }
 
@@ -80,7 +81,7 @@ inline bool RGB::isHexLetter(char ch)
     return ch >= 'A' && ch <= 'F';
 }
 
-unsigned int RGB::hexToDecimal(std::string hex)
+int RGB::hexToDecimal(std::string hex)
 {
     std::size_t hexSize = hex.size();
     hex = this->stringToUpper(hex);
@@ -103,7 +104,7 @@ unsigned int RGB::hexToDecimal(std::string hex)
         decimal += currentValue * pow(16, (hexSize - i - 1));
     }
 
-    unsigned int result = static_cast<unsigned int>(decimal);
+    int result = static_cast<int>(decimal);
         
     return result;
 }

@@ -15,7 +15,7 @@ Image::Image(ImageType type, unsigned int width, unsigned int height, unsigned i
     this->width = width;
     this->height = height;
 
-    if (this->maxValue > DEFAULT_MAX_VALUE)
+    if (maxValue > DEFAULT_MAX_VALUE)
     {
         throw std::invalid_argument("Invalid max value");
     }

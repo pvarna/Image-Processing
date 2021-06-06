@@ -1,34 +1,48 @@
 #include "../Headers/imageProcessor.h"
 #include "../Headers/imageReader.h"
 #include "../Headers/imageWriter.h"
+#include "../Headers/imageEditor.h"
 #include <iostream>
 
 ImageProcessor::ImageProcessor()
 {
-    this->image = nullptr;
+    this->imageToOpen = nullptr;
+    this->imageToSave = nullptr;
 }
 
 void ImageProcessor::readImage(std::string path)
 {
     ImageReader reader(path);
 
-    if (this->image)
+    if (this->imageToOpen)
     {
-        delete this->image;
+        delete this->imageToOpen;
     }
-    this->image = reader.loadImage();
+    this->imageToOpen = reader.loadImage();
 }
 
 void ImageProcessor::saveImage(std::string path)
 {
-    if (!this->image)
+    if (!this->imageToSave)
     {
         throw std::invalid_argument("No image is loaded");
     }
 
-    ImageWriter writer(path, this->image);
+    ImageWriter writer(path, this->imageToSave);
 
     writer.saveImage();
+}
+
+void ImageProcessor::doDithering()
+{
+    ImageEditor editor(this->imageToOpen);
+
+    if (this->imageToSave)
+    {
+        std::invalid_argument("New image already loaded");
+    }
+
+    this->imageToSave = editor.twoDimensionalErrorDiffusion();
 }
 
 /*void ImageProcessor::printImage()
@@ -44,8 +58,13 @@ void ImageProcessor::saveImage(std::string path)
 
 ImageProcessor::~ImageProcessor()
 {
-    if (this->image)
+    if (this->imageToOpen)
     {
-        delete this->image;
+        delete this->imageToOpen;
+    }
+
+    if (this->imageToSave)
+    {
+        delete this->imageToSave;
     }
 }
