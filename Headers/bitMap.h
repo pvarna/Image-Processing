@@ -15,4 +15,6 @@ public:
     //virtual void write(std::string path) override;
 
     bool operator [] (std::size_t index) const;
+
+    ~BitMap();
 };

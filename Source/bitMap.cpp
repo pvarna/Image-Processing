@@ -6,6 +6,7 @@
 BitMap::BitMap(unsigned int width, unsigned int height, std::vector<bool> pixels)
     : Image("P1", width, height)
 {
+    std::cout << "BitMap constructed" << std::endl;
     std::size_t pixelsSize = pixels.size();
 
     if (pixelsSize != width * height)
@@ -33,6 +34,11 @@ void BitMap::print()
         std::cout << this->pixels[i] << " ";
     }
     std::cout << std::endl;
+}
+
+BitMap::~BitMap()
+{
+    std::cout << "BitMap destroyed" << std::endl;
 }
 
 /*void BitMap::write(std::string path)

@@ -6,6 +6,7 @@
 
 Image::Image(const char* magicNumber, unsigned int width, unsigned int height)
 {
+    std::cout << "Image constructed" << std::endl;
     if (strlen(magicNumber) != 2 || magicNumber[0] != 'P' || magicNumber[1] < '0' || magicNumber[1] > '9')
     {
         throw std::invalid_argument("Invalid magic number");
@@ -38,4 +39,9 @@ unsigned int Image::getWidth() const
 unsigned int Image::getHeight() const
 {
     return this->height;
+}
+
+Image::~Image()
+{
+    std::cout << "Image destroyed" << std::endl;
 }

@@ -7,6 +7,7 @@
 PixMap::PixMap(unsigned int width, unsigned int height, unsigned int maxValue, std::vector<RGB> pixels)
     : Image("P3", width, height)
 {
+    std::cout << "PixMap constructed" << std::endl;
     this->maxValue = maxValue;
 
      if (this->maxValue > DEFAULT_MAX_VALUE)
@@ -56,6 +57,11 @@ void PixMap::print()
 unsigned int PixMap::getMaxValue() const
 {
     return this->maxValue;
+}
+
+PixMap::~PixMap()
+{
+    std::cout << "PixMap destoyed" << std::endl;
 }
 
 /*void PixMap::write(std::string path)

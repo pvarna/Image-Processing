@@ -21,4 +21,6 @@ public:
 
     unsigned int getMaxValue() const;
     RGB operator [] (std::size_t index) const;
+
+    ~PixMap();
 };

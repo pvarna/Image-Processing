@@ -21,4 +21,6 @@ public:
     const char* getMagicNumber() const;
     unsigned int getWidth() const;
     unsigned int getHeight() const;
+
+    virtual ~Image();
 };

@@ -17,4 +17,6 @@ public:
 
     unsigned int getMaxValue() const;
     unsigned int operator [] (std::size_t index) const;
+
+    ~GrayMap();
 };

@@ -8,6 +8,7 @@
 GrayMap::GrayMap(unsigned int width, unsigned int height, unsigned int maxValue, std::vector<unsigned int> pixels)
     : Image("P2", width, height)
 {
+    std::cout << "GrayMap constructed" << std::endl;
     this->maxValue = maxValue;
 
     if (this->maxValue > DEFAULT_MAX_VALUE)
@@ -45,6 +46,11 @@ void GrayMap::print()
         std::cout << this->pixels[i] << " ";
     }
     std::cout << std::endl;
+}
+
+GrayMap::~GrayMap()
+{
+    std::cout << "GrayMap destroyed" << std::endl;
 }
 
 /*void GrayMap::write(std::string path)

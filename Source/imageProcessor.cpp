@@ -12,11 +12,20 @@ void ImageProcessor::readImage(std::string path)
 {
     ImageReader reader(path);
 
+    if (this->image)
+    {
+        delete this->image;
+    }
     this->image = reader.loadImage();
 }
 
 void ImageProcessor::saveImage(std::string path)
 {
+    if (!this->image)
+    {
+        throw std::invalid_argument("No image is loaded");
+    }
+
     ImageWriter writer(path, this->image);
 
     writer.saveImage();
