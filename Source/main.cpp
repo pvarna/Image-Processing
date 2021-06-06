@@ -1,5 +1,3 @@
-#include "../Headers/bitMap.h"
-#include "../Headers/pixMap.h"
 #include "../Headers/imageReader.h"
 #include "../Headers/imageProcessor.h"
 #include <fstream>

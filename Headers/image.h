@@ -1,26 +1,30 @@
 #pragma once
 
 #include "consts.h"
+#include "rgb.h"
+#include "enums.h"
+#include <vector>
 #include <string>
-
 
 class Image
 {
 protected:
-    char magicNumber[MAGIC_NUMBER_LENGHT + 1];
+    ImageType type;
     unsigned int width;
     unsigned int height;
-
-    Image(const char* magicNumber, unsigned int width, unsigned int height);
+    unsigned int maxValue;
+    std::vector<RGB> pixels;
 
 public:
-    virtual void print();
-    //virtual void write(std::string path) = 0;
-    //virtual ~Image() = default;
+    Image(ImageType type, unsigned int width, unsigned int height, unsigned int maxValue, std::vector<RGB> pixels);
+    Image(unsigned int width, unsigned int height, std::string hexCode);
 
-    const char* getMagicNumber() const;
+    ImageType getType() const;
     unsigned int getWidth() const;
     unsigned int getHeight() const;
+    unsigned int getMaxValue() const;
 
-    virtual ~Image();
+    RGB operator [] (std::size_t index) const;
+
+    //virtual ~Image();
 };

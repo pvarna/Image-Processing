@@ -11,7 +11,8 @@ private:
     ImageType type;
 
     bool fileExists(std::string path);
-    ImageType getTypeOfImage(Image* image);
+
+    void saveMetaData(std::ofstream& file);
 
     void saveBitMap(std::ofstream& file);
     void saveGrayMap(std::ofstream& file);

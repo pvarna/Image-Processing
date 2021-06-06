@@ -31,7 +31,7 @@ void ImageProcessor::saveImage(std::string path)
     writer.saveImage();
 }
 
-void ImageProcessor::printImage()
+/*void ImageProcessor::printImage()
 {
     if (!this->image)
     {
@@ -40,7 +40,7 @@ void ImageProcessor::printImage()
     }
 
     this->image->print();
-}
+}*/
 
 ImageProcessor::~ImageProcessor()
 {

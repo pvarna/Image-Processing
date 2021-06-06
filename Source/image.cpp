@@ -1,34 +1,64 @@
 #include "../Headers/image.h"
-#include <cstring>
 #include <stdexcept>
 #include <fstream>
 #include <iostream>
 
-Image::Image(const char* magicNumber, unsigned int width, unsigned int height)
+Image::Image(ImageType type, unsigned int width, unsigned int height, unsigned int maxValue, std::vector<RGB> pixels)
 {
     std::cout << "Image constructed" << std::endl;
-    if (strlen(magicNumber) != 2 || magicNumber[0] != 'P' || magicNumber[1] < '0' || magicNumber[1] > '9')
+    if (type == ImageType::UNKNOWN)
     {
-        throw std::invalid_argument("Invalid magic number");
+        throw std::invalid_argument("Invalid image type");
     }
 
-    strcpy(this->magicNumber, magicNumber);
-    this->magicNumber[2] = '\0';
-
+    this->type = type;
     this->width = width;
     this->height = height;
+
+    if (this->maxValue > DEFAULT_MAX_VALUE)
+    {
+        throw std::invalid_argument("Invalid max value");
+    }
+    this->maxValue = maxValue;
+
+    std::size_t pixelsSize = pixels.size();
+
+    if (pixelsSize != width * height)
+    {
+        throw std::invalid_argument("Invalid number of pixels");
+    }
+
+    for (std::size_t i = 0; i < pixelsSize; ++i)
+    {
+        this->pixels.push_back(pixels[i]);
+    }
 }
 
-void Image::print()
+Image::Image(unsigned int width, unsigned int height, std::string hexCode)
+{
+    this->type = ImageType::PIXMAP;
+    this->width = width;
+    this->height = height;
+    this->maxValue = DEFAULT_MAX_VALUE;
+
+    std::size_t pixelsSize = width * height;
+
+    for (std::size_t i = 0; i < pixelsSize; ++i)
+    {
+        this->pixels.push_back(RGB(hexCode));
+    }
+}
+
+/*void Image::print()
 {
     std::cout << "Magic number: " << this->magicNumber << std::endl;
     std::cout << "Width: " << this->width << std::endl;
     std::cout << "Height: " << this->height << std::endl;
-}
+}*/
 
-const char* Image::getMagicNumber() const
+ImageType Image::getType() const
 {
-    return this->magicNumber;
+    return this->type;
 }
 
 unsigned int Image::getWidth() const
@@ -41,7 +71,22 @@ unsigned int Image::getHeight() const
     return this->height;
 }
 
-Image::~Image()
+unsigned int Image::getMaxValue() const
+{
+    return this->maxValue;
+}
+
+RGB Image::operator [] (std::size_t index) const
+{
+    if (index >= this->pixels.size())
+    {
+        throw std::overflow_error("Invalid index");
+    }
+
+    return this->pixels[index];
+}
+
+/*Image::~Image()
 {
     std::cout << "Image destroyed" << std::endl;
-}
+}*/

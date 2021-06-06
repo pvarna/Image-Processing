@@ -1,7 +1,4 @@
 #include "../Headers/imageReader.h"
-#include "../Headers/bitMap.h"
-#include "../Headers/grayMap.h"
-#include "../Headers/pixMap.h"
 #include "../Headers/consts.h"
 #include <cstddef>
 #include <iostream>
@@ -34,11 +31,6 @@ Image* ImageReader::loadImage()
 
     default:
         throw std::invalid_argument("Invalid image format");
-    }
-
-    if (!image)
-    {
-        std::cout << "FFFFFF" << std::endl;
     }
 
     return image;
@@ -146,7 +138,6 @@ std::vector<std::string> ImageReader::parseString(std::string string)
 ImageType ImageReader::getTypeOfImage(std::string path)
 {
     std::string fileExtension = path.substr(path.find_last_of('.') + 1);
-    //std::cout << fileExtension << std::endl;
 
     if (fileExtension.size() != EXTENSION_LENGTH || 
         (fileExtension != "pbm" && fileExtension != "pgm" && fileExtension != "ppm"))
@@ -179,21 +170,18 @@ ImageType ImageReader::getTypeOfImage(std::string path)
         (fileExtension == "pgm" && magicNumber != "P2") ||
         (fileExtension == "ppm" && magicNumber != "P3"))
     {
-        throw std::runtime_error("Discrepancy between the file extension and the magic number");
+        throw std::runtime_error("Mismatch between the file extension and the magic number");
     }
 
     switch (magicNumber[1])
     {
     case '1':
-        //std::cout << "bitmap" << std::endl;
         return ImageType::BITMAP;
 
     case '2':
-        //std::cout << "graymap" << std::endl;
         return ImageType::GRAYMAP;
 
     case '3':
-        //std::cout << "pixmap" << std::endl;
         return ImageType::PIXMAP;
     }
 
@@ -210,22 +198,19 @@ void ImageReader::readData(std::string path)
         throw std::invalid_argument("Problem while opening the file");
     }
 
-    bool metaDataRead = false;
-
     std::string currentLine;
     while (std::getline(file, currentLine))
     {
         this->removeExtraWhitespaces(currentLine);
-        std::vector<std::string> currentData = this->parseString(currentLine);
-        for (std::size_t i = 0; i < currentData.size(); ++i)
+
+        std::vector<std::string> dataCurrentLine = this->parseString(currentLine);
+        for (std::size_t i = 0; i < dataCurrentLine.size(); ++i)
         {
-            if (!isNumber(currentData[i]))
+            if (!isNumber(dataCurrentLine[i]))
             {
                 throw std::invalid_argument("Corrupted file");
             }
-            //std::cout << currentData[i] << std::endl;
-            //std::cout << currentData[i] << " added" << std::endl;
-            this->data.push_back(currentData[i]);
+            this->data.push_back(dataCurrentLine[i]);
         }
     }
 
@@ -244,13 +229,24 @@ Image* ImageReader::loadBitMap()
         throw std::invalid_argument("Corrupted file");
     }
 
-    std::vector<bool> pixels;
-    for (std::size_t i = 2; i < dataSize; ++i)
+    std::vector<RGB> pixels;
+    for (std::size_t i = BITMAP_METADATA_COUNT; i < dataSize; ++i)
     {
         std::size_t currentSize = this->data[i].size();
         for (std::size_t j = 0; j < currentSize; ++j)
         {
-            pixels.push_back(this->data[i][j] == '1');
+            if (this->data[i][j] == '0')
+            {
+                pixels.push_back(RGB(RGB_WHITE, RGB_WHITE, RGB_WHITE));
+            }
+            else if (this->data[i][j] == '1')
+            {
+                pixels.push_back(RGB(RGB_BLACK, RGB_BLACK, RGB_BLACK));
+            }
+            else
+            {
+                throw std::invalid_argument("Corrupted file");
+            }
         }
     }
 
@@ -258,7 +254,7 @@ Image* ImageReader::loadBitMap()
     std::cout << height << std::endl;
     std::cout << pixels.size() << std::endl;*/
 
-   return new BitMap(width, height, pixels);
+   return new Image(ImageType::BITMAP, width, height, DEFAULT_MAX_VALUE, pixels);
 }
 
 Image* ImageReader::loadGrayMap()
@@ -279,26 +275,27 @@ Image* ImageReader::loadGrayMap()
         throw std::invalid_argument("Corrupted file");
     }
 
-    std::vector<unsigned int> pixels;
+    std::vector<RGB> pixels;
 
-    for (std::size_t i = 3; i < dataSize; ++i)
+    for (std::size_t i = GRAYMAP_PIXMAP_METADATA_COUNT; i < dataSize; ++i)
     {
         unsigned int currentNumber = std::stoi(this->data[i]);
+        
         if (currentNumber > DEFAULT_MAX_VALUE)
         {
             throw std::invalid_argument("Corrupted file");
         }
         else if (currentNumber > maxValue)
         {
-            pixels.push_back(maxValue);
+            pixels.push_back(RGB(maxValue, maxValue, maxValue));
         }
         else
         {
-            pixels.push_back(currentNumber);
+            pixels.push_back(RGB(currentNumber, currentNumber, currentNumber));
         }
     }
 
-    return new GrayMap(width, height, maxValue, pixels);
+    return new Image(ImageType::GRAYMAP, width, height, maxValue, pixels);
 }
 
 Image* ImageReader::loadPixMap()
@@ -346,9 +343,8 @@ Image* ImageReader::loadPixMap()
             currentBlue = maxValue;
         }
 
-        RGB currentPixel(currentRed, currentGreen, currentBlue);
-        pixels.push_back(currentPixel);
+        pixels.push_back(RGB(currentRed, currentGreen, currentBlue));
     }
 
-    return new PixMap(width, height, maxValue, pixels);   
+    return new Image(ImageType::PIXMAP, width, height, maxValue, pixels);
 }

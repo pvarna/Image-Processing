@@ -1,7 +1,4 @@
 #include "../Headers/imageWriter.h"
-#include "../Headers/bitMap.h"
-#include "../Headers/grayMap.h"
-#include "../Headers/pixMap.h"
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -15,32 +12,7 @@ ImageWriter::ImageWriter(std::string path, Image* image)
 
     this->image = image;
     this->path = path;
-    this->type = this->getTypeOfImage(image);
-}
-
-ImageType ImageWriter::getTypeOfImage(Image* image)
-{
-    if (!image)
-    {
-        return ImageType::UNKNOWN;
-    }
-
-    const char* magicNumber = image->getMagicNumber();
-
-    if (strcmp(magicNumber, "P1") == 0)
-    {
-        return ImageType::BITMAP;
-    }
-    else if (strcmp(magicNumber, "P2") == 0)
-    {
-        return ImageType::GRAYMAP;
-    }
-    else if (strcmp(magicNumber, "P3") == 0)
-    {
-        return ImageType::PIXMAP;
-    }
-
-    return ImageType::UNKNOWN;
+    this->type = image->getType();
 }
 
 bool ImageWriter::fileExists(std::string path)
@@ -53,13 +25,31 @@ bool ImageWriter::fileExists(std::string path)
     return result;
 }
 
+void ImageWriter::saveMetaData(std::ofstream& file)
+{
+    switch (this->type)
+    {
+    case ImageType::BITMAP:
+        file << "P1" << std::endl;
+        break;
+
+    case ImageType::GRAYMAP:
+        file << "P2" << std::endl;
+        break;
+
+    case ImageType::PIXMAP:
+        file << "P3" << std::endl;
+        break;
+    }
+
+    file << this->image->getWidth() << " " << this->image->getHeight() << std::endl;
+}
+
 void ImageWriter::saveBitMap(std::ofstream& file)
 {
     unsigned int width = this->image->getWidth();
     unsigned int height = this->image->getHeight();
-
-    file << this->image->getMagicNumber() << std::endl;
-    file << width << " " << height << std::endl;
+    this->saveMetaData(file);
     
     std::size_t sizePixels = width * height;
     for (std::size_t i = 0; i < sizePixels; ++i)
@@ -68,7 +58,15 @@ void ImageWriter::saveBitMap(std::ofstream& file)
         {
             file << std::endl;
         }
-        file << (*dynamic_cast<BitMap*>(this->image))[i] << " ";
+        
+        if ((*this->image)[i].red == RGB_WHITE)
+        {
+            file << "0 "; 
+        }
+        else
+        {
+            file << "1 ";
+        }
     }
 }
 
@@ -76,10 +74,9 @@ void ImageWriter::saveGrayMap(std::ofstream& file)
 {
     unsigned int width = this->image->getWidth();
     unsigned int height = this->image->getHeight();
-    unsigned int maxValue = dynamic_cast<GrayMap*>(this->image)->getMaxValue();
-    
-    file << this->image->getMagicNumber() << std::endl;
-    file << width << " " << height << std::endl;
+    unsigned int maxValue = this->image->getMaxValue();
+
+    this->saveMetaData(file);
     file << maxValue << std::endl;
 
     std::size_t sizePixels = width * height;
@@ -89,7 +86,7 @@ void ImageWriter::saveGrayMap(std::ofstream& file)
         {
             file << std::endl;
         }
-        file << (*dynamic_cast<GrayMap*>(this->image))[i] << " ";
+        file << (*this->image)[i].red << " ";
     }
 }
 
@@ -97,16 +94,15 @@ void ImageWriter::savePixMap(std::ofstream& file)
 {
     unsigned int width = this->image->getWidth();
     unsigned int height = this->image->getHeight();
-    unsigned int maxValue = dynamic_cast<PixMap*>(this->image)->getMaxValue();
+    unsigned int maxValue = this->image->getMaxValue();
 
-    file << this->image->getMagicNumber() << std::endl;
-    file << width << " " << height << std::endl;
+    this->saveMetaData(file);
     file << maxValue << std::endl;
 
     std::size_t sizePixels = width * height;
     for (std::size_t i = 0; i < sizePixels; ++i)
     {
-        file << (*dynamic_cast<PixMap*>(this->image))[i] << std::endl;
+        file << (*this->image)[i] << std::endl;
     }
 }
 
@@ -137,7 +133,6 @@ void ImageWriter::saveImage()
 
         if (tolower(choice) == 'n')
         {
-            std::cout << "tuka???" << std::endl;
             file.close();
             return;
         }
