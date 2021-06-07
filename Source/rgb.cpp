@@ -90,7 +90,7 @@ int RGB::hexToDecimal(std::string hex)
     for (std::size_t i = 0; i < hexSize; ++i)
     {
         char current = hex[i];
-        unsigned int currentValue;
+        int currentValue;
 
         if (this->isDigit(hex[i]))
         {

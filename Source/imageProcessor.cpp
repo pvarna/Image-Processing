@@ -42,7 +42,7 @@ void ImageProcessor::doDithering()
         std::invalid_argument("New image already loaded");
     }
 
-    this->imageToSave = editor.twoDimensionalErrorDiffusion();
+    this->imageToSave = editor.sierraLiteDithering();
 }
 
 /*void ImageProcessor::printImage()
