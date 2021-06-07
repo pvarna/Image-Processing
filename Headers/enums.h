@@ -23,3 +23,10 @@ enum class ErrorDiffusionAlrogithm
     SIERRA_TWO_ROWS,
     SIERRA_LITE
 };
+
+enum class OrderedDitheringAlgorithm
+{
+    UNKNOWN = -1,
+    FOUR_X_FOUR_BAYER_MATRIX,
+    EIGHT_X_EIGHT_BAYER_MATRIX
+};

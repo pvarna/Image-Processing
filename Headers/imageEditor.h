@@ -13,7 +13,7 @@ private:
 
     bool isInsideTheImage(std::size_t i, std::size_t j, unsigned int height, unsigned int width);
 
-    void getCoefficientTable(ErrorDiffusionAlrogithm alrorithm, int coefficients[3][5], bool& isShiftable, int& divisor);
+    void getCoefficientTable(ErrorDiffusionAlrogithm algorithm, int coefficients[3][5], bool& isShiftable, int& divisor);
 
     void addError(int& pixel, int error, int coefficient, bool isShiftable, int divisor);
 
@@ -22,17 +22,6 @@ private:
 public:
     ImageEditor(Image* image);
 
-    Image* oneDimensionalErrorDiffusion();
-    Image* twoDimensionalErrorDiffusion();
-    Image* floydSteinbergDithering();
-    Image* floydSteinbergFalseDithering();
-    Image* jarvisJudiceNinkeDithering(); // problem
-    Image* stuckiDithering(); // problem
-    Image* atkinsonDithering();
-    Image* burkesDithering();
-    Image* sierraDithering();
-    Image* twoRowSierraDithering();
-    Image* sierraLiteDithering();
-
-    Image* errorDiffusion(ErrorDiffusionAlrogithm alrorithm);
+    Image* errorDiffusionDithering(ErrorDiffusionAlrogithm algorithm);
+    Image* orderedDithering(OrderedDitheringAlgorithm algorithm);
 };

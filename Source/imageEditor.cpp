@@ -37,6 +37,138 @@ inline bool ImageEditor::isInsideTheImage(std::size_t i, std::size_t j, unsigned
     return i < height && j < width;
 }
 
+void ImageEditor::getCoefficientTable(ErrorDiffusionAlrogithm algorithm, int coefficients[3][5], 
+                                        bool& isShiftable, int& divisor)
+{
+    switch (algorithm)
+    {
+    case ErrorDiffusionAlrogithm::BASIC_ONE_DIMENSIONAL:
+        coefficients[0][3] = 1;
+        isShiftable = false;
+        divisor = 1;
+        break;
+
+    case ErrorDiffusionAlrogithm::BASIC_TWO_DIMENSIONAL:
+        coefficients[0][3] = 1;
+        coefficients[1][2] = 1;
+        isShiftable = true;
+        divisor = 1;
+        break;
+
+    case ErrorDiffusionAlrogithm::FLOYD_STEINBERG:
+        coefficients[0][3] = 7;
+        coefficients[1][1] = 3;
+        coefficients[1][2] = 5;
+        coefficients[1][3] = 1;
+        isShiftable = true;
+        divisor = 4;
+        break;
+
+    case ErrorDiffusionAlrogithm::FLOYD_STEINBERG_FALSE:
+        coefficients[0][3] = 3;
+        coefficients[1][2] = 3;
+        coefficients[1][3] = 2;
+        isShiftable = true;
+        divisor = 3;
+        break;
+
+    case ErrorDiffusionAlrogithm::JARVIS_JUDICE_NINKE:
+        coefficients[0][3] = 7;
+        coefficients[0][4] = 5;
+        coefficients[1][0] = 3;
+        coefficients[1][1] = 5;
+        coefficients[1][2] = 7;
+        coefficients[1][3] = 5;
+        coefficients[1][4] = 3;
+        coefficients[2][0] = 1;
+        coefficients[2][1] = 3;
+        coefficients[2][2] = 5;
+        coefficients[2][3] = 3;
+        coefficients[2][4] = 1;
+        isShiftable = false;
+        divisor = 48;
+        break;
+
+    case ErrorDiffusionAlrogithm::STUCKI:
+        coefficients[0][3] = 8;
+        coefficients[0][4] = 4;
+        coefficients[1][0] = 2;
+        coefficients[1][1] = 4;
+        coefficients[1][2] = 8;
+        coefficients[1][3] = 4;
+        coefficients[1][4] = 2;
+        coefficients[2][0] = 1;
+        coefficients[2][1] = 2;
+        coefficients[2][2] = 4;
+        coefficients[2][3] = 2;
+        coefficients[2][4] = 1;
+        isShiftable = false;
+        divisor = 42;
+        break;
+
+    case ErrorDiffusionAlrogithm::ATKINSON:
+        coefficients[0][3] = 1;
+        coefficients[0][4] = 1;
+        coefficients[1][1] = 1;
+        coefficients[1][2] = 1;
+        coefficients[1][3] = 1;
+        coefficients[2][2] = 1;
+        isShiftable = true;
+        divisor = 3;
+        break;
+
+    case ErrorDiffusionAlrogithm::BURKES:
+        coefficients[0][3] = 8;
+        coefficients[0][4] = 4;
+        coefficients[1][0] = 2;
+        coefficients[1][1] = 4;
+        coefficients[1][2] = 8;
+        coefficients[1][3] = 4;
+        coefficients[1][4] = 2;
+        isShiftable = true;
+        divisor = 5;
+        break;
+
+    case ErrorDiffusionAlrogithm::SIERRA:
+        coefficients[0][3] = 5;
+        coefficients[0][4] = 3;
+        coefficients[1][0] = 2;
+        coefficients[1][1] = 4;
+        coefficients[1][2] = 5;
+        coefficients[1][3] = 4;
+        coefficients[1][4] = 2;
+        coefficients[2][1] = 2;
+        coefficients[2][2] = 3;
+        coefficients[2][3] = 2;
+        isShiftable = true;
+        divisor = 5;
+        break;
+
+    case ErrorDiffusionAlrogithm::SIERRA_TWO_ROWS:
+        coefficients[0][3] = 4;
+        coefficients[0][4] = 3;
+        coefficients[1][0] = 1;
+        coefficients[1][1] = 2;
+        coefficients[1][2] = 3;
+        coefficients[1][3] = 2;
+        coefficients[1][4] = 1;
+        isShiftable = true;
+        divisor = 4;
+        break;
+
+    case ErrorDiffusionAlrogithm::SIERRA_LITE:
+        coefficients[0][3] = 2;
+        coefficients[1][1] = 1;
+        coefficients[1][2] = 1;
+        isShiftable = true;
+        divisor = 2;
+        break;
+    
+    default:
+        throw std::invalid_argument("Invalid algorithm");
+    }
+}
+
 void ImageEditor::addError(int& pixel, int error, int coefficient, bool isShiftable, int divisor)
 {
     if (isShiftable)
@@ -71,93 +203,7 @@ void ImageEditor::spreadError(std::size_t currentI, std::size_t currentJ, unsign
     }
 }
 
-Image* ImageEditor::oneDimensionalErrorDiffusion()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            int oldPixel = this->averagePixels[i*width + j];
-            //std::cout << oldPixel << std::endl;
-            int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 1, 0},
-                {0, 0, 0, 0, 0},
-                {0, 0, 0, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, false, 1);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);
-}
-
-Image* ImageEditor::twoDimensionalErrorDiffusion()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            int oldPixel = this->averagePixels[i*width + j];
-            std::cout << oldPixel << std::endl;
-            int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 1, 0},
-                {0, 0, 1, 0, 0},
-                {0, 0, 0, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 1);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);
-}
-
-Image* ImageEditor::floydSteinbergDithering()
+Image* ImageEditor::errorDiffusionDithering(ErrorDiffusionAlrogithm alrorithm)
 {
     std::vector<RGB> newPixels;
     ImageType type = this->toBeEdited->getType();
@@ -183,15 +229,11 @@ Image* ImageEditor::floydSteinbergDithering()
             }
             error = oldPixel - newPixel;
 
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 7, 0},
-                {0, 3, 5, 1, 0},
-                {0, 0, 0, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 4);
-
+            int coefficients[3][5] = {};
+            bool isShiftable = true;
+            int divisor = 1;
+            getCoefficientTable(alrorithm, coefficients, isShiftable, divisor);
+            spreadError(i, j, height, width, coefficients, error, averagePixels, isShiftable, divisor);
 
             newPixels.push_back(RGB(newPixel, newPixel, newPixel));
         }
@@ -200,8 +242,28 @@ Image* ImageEditor::floydSteinbergDithering()
     return new Image(type, width, height, maxValue, newPixels);   
 }
 
-Image* ImageEditor::floydSteinbergFalseDithering()
+Image* ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
 {
+    int fourXfourMatrix[4][4] = 
+    {
+        { 0,  8,  2, 10},
+        {12,  4, 14,  6},
+        { 3, 11,  1,  9},
+        {15,  7, 13,  5}
+    };
+
+    int eightXEightMatrix[8][8] = 
+    {
+        { 0, 32,  8, 40,  2, 34, 10, 42},
+        {48, 16, 56, 24, 50, 18, 58, 26}, 
+        {12, 44,  4, 36, 14, 46,  6, 38}, 
+        {60, 28, 52, 20, 62, 30, 54, 22}, 
+        { 3, 35, 11, 43,  1, 33,  9, 41}, 
+        {51, 19, 59, 27, 49, 17, 57, 25},
+        {15, 47,  7, 39, 13, 45,  5, 37},
+        {63, 31, 55, 23, 61, 29, 53, 21} 
+    };
+
     std::vector<RGB> newPixels;
     ImageType type = this->toBeEdited->getType();
     unsigned int width = this->toBeEdited->getWidth();
@@ -210,366 +272,35 @@ Image* ImageEditor::floydSteinbergFalseDithering()
 
     for (std::size_t i = 0; i < height; ++i)
     {
-        int error = 0;
+        int row = (algorithm == OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX) ? (i % 4) : (i % 8);
         for (std::size_t j = 0; j < width; ++j)
         {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
+            int column = (algorithm == OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX) ? (j % 4) : (j % 8);
+            int oldPixel = this->averagePixels[i*width + j];
+            int newPixel;
+            
+            if (algorithm == OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX)
             {
-                newPixel = 0;
+                if ((oldPixel >> 4) < fourXfourMatrix[row][column])
+                {
+                    newPixel = 0;
+                }
+                else
+                {
+                    newPixel = maxValue;
+                }
             }
             else
             {
-                newPixel = maxValue;
+                if ((oldPixel >> 2) < eightXEightMatrix[row][column])
+                {
+                    newPixel = 0;
+                }
+                else
+                {
+                    newPixel = maxValue;
+                }
             }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 3, 0},
-                {0, 0, 3, 2, 0},
-                {0, 0, 0, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 3);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);   
-}
-
-Image* ImageEditor::jarvisJudiceNinkeDithering()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 7, 5},
-                {3, 5, 7, 5, 3},
-                {1, 3, 5, 3, 1}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, false, 48);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);
-}
-
-Image* ImageEditor::stuckiDithering()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 8, 4},
-                {2, 4, 8, 4, 2},
-                {1, 2, 4, 2, 1}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, false, 42);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);
-}
-
-Image* ImageEditor::atkinsonDithering()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 1, 1},
-                {0, 1, 1, 1, 0},
-                {0, 0, 1, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 3);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);   
-}
-
-Image* ImageEditor::burkesDithering()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 8, 4},
-                {2, 4, 8, 4, 2},
-                {0, 0, 0, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 5);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);   
-}
-
-Image* ImageEditor::sierraDithering()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 5, 3},
-                {2, 4, 5, 4, 2},
-                {0, 2, 3, 2, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 5);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);
-}
-
-Image* ImageEditor::twoRowSierraDithering()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 4, 3},
-                {1, 2, 3, 2, 1},
-                {0, 0, 0, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 4);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);
-}
-
-Image* ImageEditor::sierraLiteDithering()
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 2, 0},
-                {0, 1, 1, 0, 0},
-                {0, 0, 0, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 2);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    return new Image(type, width, height, maxValue, newPixels);
-}
-
-Image* ImageEditor::errorDiffusion(ErrorDiffusionAlrogithm alrorithm)
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            unsigned int oldPixel = this->averagePixels[i*width + j];
-            unsigned int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = 
-            {
-                {0, 0, 0, 2, 0},
-                {0, 1, 1, 0, 0},
-                {0, 0, 0, 0, 0}
-
-            };
-            this->spreadError(i, j, height, width, coefficients, error, averagePixels, true, 2);
 
             newPixels.push_back(RGB(newPixel, newPixel, newPixel));
         }

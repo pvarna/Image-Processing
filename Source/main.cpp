@@ -10,6 +10,6 @@ int main ()
     imageProcessor.readImage("cube.ppm");
     imageProcessor.doDithering();
 
-    imageProcessor.saveImage("cubeSierraLite.ppm");
+    imageProcessor.saveImage("cubeOrdered1.ppm");
     return 0;
 }

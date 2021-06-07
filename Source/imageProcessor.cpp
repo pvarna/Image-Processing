@@ -42,7 +42,7 @@ void ImageProcessor::doDithering()
         std::invalid_argument("New image already loaded");
     }
 
-    this->imageToSave = editor.sierraLiteDithering();
+    this->imageToSave = editor.orderedDithering(OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX);
 }
 
 /*void ImageProcessor::printImage()
