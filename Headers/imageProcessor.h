@@ -18,4 +18,6 @@ public:
     void printImage();
 
     void doDithering();
+    void crop();
+    void resize();
 };

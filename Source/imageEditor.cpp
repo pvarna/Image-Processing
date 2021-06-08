@@ -1,6 +1,7 @@
 #include "../Headers/imageEditor.h"
 #include "../Headers/rgb.h"
 #include "../Headers/enums.h"
+#include <cmath>
 #include <stdexcept>
 #include <vector>
 #include <iostream>
@@ -307,4 +308,92 @@ Image* ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
     }
 
     return new Image(type, width, height, maxValue, newPixels);   
+}
+
+Image* ImageEditor::cropImage(int x1, int y1, int x2, int y2)
+{
+    int width = this->toBeEdited->getWidth();
+    int height = this->toBeEdited->getHeight();
+
+    if (x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0)
+    {
+        throw std::invalid_argument("Indexes must be bigger than or equal to 0");
+    }
+
+    if (x1 >= width)
+    {
+        x1 = width - 1;
+    }
+    if (x2 >= width)
+    {
+        x2 = width - 1;
+    }
+    if (y1 >= height)
+    {
+        y1 = height - 1;
+    }
+    if (y2 >= height)
+    {
+        y2 = height - 1;
+    }
+
+    if (x1 == x2 || y1 == y2)
+    {
+        throw std::invalid_argument("Indexes do not form a rectangle");
+    }
+
+    int minX = std::min(x1, x2);
+    int maxX = std::max(x1, x2);
+    int minY = std::min(y1, y2);
+    int maxY = std::max(y1, y2);
+
+    std::vector<RGB> croppedPixels;
+    for (std::size_t i = minY; i <= maxY; ++i)
+    {
+        for (std::size_t j = minX; j <= maxX; ++j)
+        {
+            croppedPixels.push_back((*this->toBeEdited)[i*width + j]);
+        }
+    }
+
+    return new Image(this->toBeEdited->getType(), maxX - minX + 1, maxY - minY + 1, this->toBeEdited->getMaxValue(), croppedPixels);
+}
+
+Image* ImageEditor::resize(unsigned int newWidth, unsigned int newHeight)
+{
+    if (newWidth <= 0 || newHeight <= 0)
+    {
+        throw std::invalid_argument("New width and new height must be bigger than 0");
+    }
+    int width = this->toBeEdited->getWidth();
+    int height = this->toBeEdited->getHeight();
+    std::vector<RGB> resizedPixels;
+
+    for (std::size_t i = 0; i < newHeight; ++i)
+    {
+        for (std::size_t j = 0; j < newWidth; ++j)
+        {
+            int newI = static_cast<int>(round(static_cast<double>(i)/static_cast<double>(newHeight)*static_cast<double>(height)));
+            int newJ = static_cast<int>(round(static_cast<double>(j)/static_cast<double>(newWidth)*static_cast<double>(width)));
+            newI = std::min(newI, height - 1);
+            newJ = std::min(newJ, width - 1);
+
+            resizedPixels.push_back((*this->toBeEdited)[newI*width + newJ]);
+        }
+    }
+
+    return new Image(this->toBeEdited->getType(), newWidth, newHeight, this->toBeEdited->getMaxValue(), resizedPixels);
+}
+
+Image* ImageEditor::resize(double percentage)
+{
+    if (percentage <= 0)
+    {
+        throw std::invalid_argument("The percentage must be bigger than 0");
+    }
+
+    unsigned int newWidth = static_cast<unsigned int>(round(static_cast<double>(this->toBeEdited->getWidth())*percentage/100));
+    unsigned int newHeight = static_cast<unsigned int>(round(static_cast<double>(this->toBeEdited->getHeight())*percentage/100));
+
+    return this->resize(newWidth, newHeight);
 }

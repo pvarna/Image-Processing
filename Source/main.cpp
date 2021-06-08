@@ -7,9 +7,9 @@ int main ()
 {
     ImageProcessor imageProcessor;
 
-    imageProcessor.readImage("cube.ppm");
-    imageProcessor.doDithering();
+    imageProcessor.readImage("blue.ppm");
+    imageProcessor.resize();
 
-    imageProcessor.saveImage("cubeOrdered1.ppm");
+    imageProcessor.saveImage("blueResize3.ppm");
     return 0;
 }

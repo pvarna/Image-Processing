@@ -42,19 +42,32 @@ void ImageProcessor::doDithering()
         std::invalid_argument("New image already loaded");
     }
 
-    this->imageToSave = editor.orderedDithering(OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX);
+    this->imageToSave = editor.orderedDithering(OrderedDitheringAlgorithm::EIGHT_X_EIGHT_BAYER_MATRIX);
 }
 
-/*void ImageProcessor::printImage()
+void ImageProcessor::crop()
 {
-    if (!this->image)
+    ImageEditor editor(this->imageToOpen);
+
+    if (this->imageToSave)
     {
-        std::cout << "No image loaded" << std::endl;
-        return;
+        std::invalid_argument("New image already loaded");
     }
 
-    this->image->print();
-}*/
+    this->imageToSave = editor.cropImage(100, 100, 300, 300);
+}
+
+void ImageProcessor::resize()
+{
+    ImageEditor editor(this->imageToOpen);
+
+    if (this->imageToSave)
+    {
+        std::invalid_argument("New image already loaded");
+    }
+
+    this->imageToSave = editor.resize(200);
+}
 
 ImageProcessor::~ImageProcessor()
 {

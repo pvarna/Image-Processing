@@ -24,4 +24,8 @@ public:
 
     Image* errorDiffusionDithering(ErrorDiffusionAlrogithm algorithm);
     Image* orderedDithering(OrderedDitheringAlgorithm algorithm);
+
+    Image* cropImage(int x1, int y1, int x2, int y2);
+    Image* resize(unsigned int newWidth, unsigned int newHeight);
+    Image* resize(double percentage);
 };

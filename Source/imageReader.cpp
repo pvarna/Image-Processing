@@ -158,13 +158,9 @@ ImageType ImageReader::getTypeOfImage(std::string path)
     file.seekg(0, std::ios::beg);
     file.close();
 
-    //std::cout << firstLine << std::endl;
-
     std::string magicNumber = "";
     magicNumber.push_back(firstLine[0]);
     magicNumber.push_back(firstLine[1]);
-
-    //std::cout << magicNumber << std::endl;
 
     if ((fileExtension == "pbm" && magicNumber != "P1") ||
         (fileExtension == "pgm" && magicNumber != "P2") ||
@@ -249,10 +245,6 @@ Image* ImageReader::loadBitMap()
             }
         }
     }
-
-    /*std::cout << width << std::endl;
-    std::cout << height << std::endl;
-    std::cout << pixels.size() << std::endl;*/
 
    return new Image(ImageType::BITMAP, width, height, DEFAULT_MAX_VALUE, pixels);
 }
