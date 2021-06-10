@@ -1,23 +1,37 @@
 #pragma once
-#include "image.h"
+#include "imageEditor.h"
+#include "commandLine.h"
+#include "consts.h"
 
 class ImageProcessor
 {
 private:
-    Image* imageToOpen;
-    Image* imageToSave;    
+    static std::string validCommands[NUMBER_OF_COMMANDS];
+
+    ImageEditor editor; 
+    bool stopProgram;
+
+    bool isValid(CommandLine command); 
+    
+    bool isDigit(char ch);
+    bool isNumber(std::string str);
+
+    void printHelp();
+
 public:
     ImageProcessor();
-    ImageProcessor(const ImageProcessor& other) = delete;
-    ImageProcessor& operator = (const ImageProcessor& other) = delete;
-    ~ImageProcessor();
 
-    void readImage(std::string path);
-    void saveImage(std::string path);
+    void execute(CommandLine command);
+    // ImageProcessor(const ImageProcessor& other) = delete;
+    // ImageProcessor& operator = (const ImageProcessor& other) = delete;
+    // ~ImageProcessor();
 
-    void printImage();
+    // void openImage(std::string path);
+    // void saveImage(std::string path);
 
-    void doDithering();
-    void crop();
-    void resize();
+    // void printImage();
+
+    // void doDithering();
+    // void crop();
+    // void resize();
 };

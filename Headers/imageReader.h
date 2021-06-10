@@ -2,16 +2,16 @@
 
 #include "image.h"
 #include "enums.h"
+#include "imageOpener.h"
 #include <string>
 #include <vector>
 
-class ImageReader
+class ImageReader : public ImageOpener
 {
 private:
-    ImageType type;
     std::vector<std::string> data;
 
-    ImageType getTypeOfImage(std::string path);
+    ImageType getTypeOfImage();
 
     bool isDigit(char ch);
     bool isNumber(std::string string);
@@ -19,7 +19,7 @@ private:
     void removeExtraWhitespaces(std::string& string);
     std::vector<std::string> parseString(std::string string);
 
-    void readData(std::string path);
+    void readData();
 
     Image* loadBitMap();
     Image* loadGrayMap();

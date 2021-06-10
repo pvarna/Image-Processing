@@ -1,31 +1,129 @@
 #include "../Headers/imageEditor.h"
 #include "../Headers/rgb.h"
 #include "../Headers/enums.h"
+#include "../Headers/imageReader.h"
+#include "../Headers/imageWriter.h"
 #include <cmath>
 #include <stdexcept>
 #include <vector>
 #include <iostream>
 
-ImageEditor::ImageEditor(Image* image)
+ImageEditor::ImageEditor()
 {
-    if (!image)
+    this->image = nullptr;
+    this->currentFileName = "";
+    this->unsavedChanges = false;
+}
+
+ImageEditor::~ImageEditor()
+{
+    this->deallocate();
+}
+
+std::string ImageEditor::getCurrentFileName() const
+{
+    return this->currentFileName;
+}
+
+Image* ImageEditor::getImage() const
+{
+    return this->image;
+}
+
+void ImageEditor::getFileName(std::string path)
+{
+    std::size_t found = path.find_first_of("/\\");
+
+    if (found == std::string::npos)
     {
-        throw std::invalid_argument("No image is loaded");
+        this->currentFileName = path;
+        return;
     }
 
-    this->toBeEdited = image;
+    this->currentFileName = path.substr(found + 1);
+}
 
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    for (std::size_t i = 0; i < height; ++i)
+bool ImageEditor::close()
+{
+    if (this->unsavedChanges)
     {
-        for (std::size_t j = 0; j < width; ++j)
+        std::cout << "There are unsaved changes to the image. Are you sure you want to close it? [Y/n]: ";
+        char choice;
+        do
         {
-            int max = std::max((*this->toBeEdited)[i*width + j].red, std::max((*this->toBeEdited)[i*width + j].green, (*this->toBeEdited)[i*width + j].blue));
-            int min = std::min((*this->toBeEdited)[i*width + j].red, std::min((*this->toBeEdited)[i*width + j].green, (*this->toBeEdited)[i*width + j].blue));
-            this->averagePixels.push_back((min+max)/2);
+            std::cin >> choice;
+            std::cin.ignore();
+            if (tolower(choice) != 'y' && tolower(choice) != 'n' && choice != '\n')
+            {
+                std::cout << "Invalid choice! Try again [Y/n]: ";
+            }
+        } while (tolower(choice) != 'y' && tolower(choice) != 'n' && choice != '\n');
+
+        if (tolower(choice) == 'n')
+        {
+            return false;
         }
     }
+
+    this->deallocate();
+    this->currentFileName.clear();
+    this->currentFileName = "";
+    this->unsavedChanges = false;
+
+    return true;
+}
+
+void ImageEditor::deallocate()
+{
+    if (this->image)
+    {
+        delete this->image;
+    }
+    this->grayscalePixels.clear();
+}
+
+void ImageEditor::loadGrayscalePixels()
+{
+    unsigned int width = this->image->getWidth();
+    unsigned int height = this->image->getHeight();
+
+    for (std::size_t i = 0; i < width * height; ++i)
+    {
+        this->grayscalePixels.push_back(this->RGBToGrayscale((*this->image)[i]));
+    }
+}
+
+void ImageEditor::openImage(std::string path)
+{
+    ImageReader reader(path);
+
+    this->image = reader.loadImage();
+    this->loadGrayscalePixels();
+    this->getFileName(path);
+}
+
+void ImageEditor::saveImage(std::string path)
+{
+    ImageWriter writer(path, this->image);
+
+    writer.saveImage();
+    this->unsavedChanges = false;
+}
+
+void ImageEditor::createImage(unsigned int width, unsigned int height, std::string hexColor)
+{
+    this->image = new Image(width, height, hexColor);
+    this->loadGrayscalePixels();
+    this->currentFileName = "new file";
+    this->unsavedChanges = true;
+}
+
+int ImageEditor::RGBToGrayscale(RGB color)
+{
+    int max = std::max(color.red, std::max(color.green, color.blue));
+    int min = std::min(color.red, std::min(color.green, color.blue));
+
+    return static_cast<int>((static_cast<double>(min) + static_cast<double>(max)) / 2);
 }
 
 inline bool ImageEditor::isCloserToZero(int value, int maxValue)
@@ -204,20 +302,20 @@ void ImageEditor::spreadError(std::size_t currentI, std::size_t currentJ, unsign
     }
 }
 
-Image* ImageEditor::errorDiffusionDithering(ErrorDiffusionAlrogithm alrorithm)
+void ImageEditor::errorDiffusionDithering(ErrorDiffusionAlrogithm alrorithm)
 {
     std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
+    ImageType type = this->image->getType();
+    unsigned int width = this->image->getWidth();
+    unsigned int height = this->image->getHeight();
+    unsigned int maxValue = this->image->getMaxValue();
 
     for (std::size_t i = 0; i < height; ++i)
     {
         int error = 0;
         for (std::size_t j = 0; j < width; ++j)
         {
-            int oldPixel = this->averagePixels[i*width + j];
+            int oldPixel = this->grayscalePixels[i*width + j];
             int newPixel;
 
             if (isCloserToZero(oldPixel, maxValue))
@@ -234,16 +332,20 @@ Image* ImageEditor::errorDiffusionDithering(ErrorDiffusionAlrogithm alrorithm)
             bool isShiftable = true;
             int divisor = 1;
             getCoefficientTable(alrorithm, coefficients, isShiftable, divisor);
-            spreadError(i, j, height, width, coefficients, error, averagePixels, isShiftable, divisor);
+            spreadError(i, j, height, width, coefficients, error, grayscalePixels, isShiftable, divisor);
 
             newPixels.push_back(RGB(newPixel, newPixel, newPixel));
         }
     }
 
-    return new Image(type, width, height, maxValue, newPixels);   
+    Image* ditheredImage = new Image(type, width, height, maxValue, newPixels);  
+    this->deallocate();
+    this->image = ditheredImage;
+    this->unsavedChanges = true;
+    this->loadGrayscalePixels();
 }
 
-Image* ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
+void ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
 {
     int fourXfourMatrix[4][4] = 
     {
@@ -266,10 +368,10 @@ Image* ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
     };
 
     std::vector<RGB> newPixels;
-    ImageType type = this->toBeEdited->getType();
-    unsigned int width = this->toBeEdited->getWidth();
-    unsigned int height = this->toBeEdited->getHeight();
-    unsigned int maxValue = this->toBeEdited->getMaxValue();
+    ImageType type = this->image->getType();
+    unsigned int width = this->image->getWidth();
+    unsigned int height = this->image->getHeight();
+    unsigned int maxValue = this->image->getMaxValue();
 
     for (std::size_t i = 0; i < height; ++i)
     {
@@ -277,7 +379,7 @@ Image* ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
         for (std::size_t j = 0; j < width; ++j)
         {
             int column = (algorithm == OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX) ? (j % 4) : (j % 8);
-            int oldPixel = this->averagePixels[i*width + j];
+            int oldPixel = this->grayscalePixels[i*width + j];
             int newPixel;
             
             if (algorithm == OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX)
@@ -307,13 +409,17 @@ Image* ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
         }
     }
 
-    return new Image(type, width, height, maxValue, newPixels);   
+    Image* ditheredImage = new Image(type, width, height, maxValue, newPixels);  
+    this->deallocate();
+    this->image = ditheredImage;
+    this->unsavedChanges = true;
+    this->loadGrayscalePixels();   
 }
 
-Image* ImageEditor::cropImage(int x1, int y1, int x2, int y2)
+void ImageEditor::cropImage(int x1, int y1, int x2, int y2)
 {
-    int width = this->toBeEdited->getWidth();
-    int height = this->toBeEdited->getHeight();
+    int width = this->image->getWidth();
+    int height = this->image->getHeight();
 
     if (x1 < 0 || y1 < 0 || x2 < 0 || y2 < 0)
     {
@@ -352,21 +458,25 @@ Image* ImageEditor::cropImage(int x1, int y1, int x2, int y2)
     {
         for (std::size_t j = minX; j <= maxX; ++j)
         {
-            croppedPixels.push_back((*this->toBeEdited)[i*width + j]);
+            croppedPixels.push_back((*this->image)[i*width + j]);
         }
     }
 
-    return new Image(this->toBeEdited->getType(), maxX - minX + 1, maxY - minY + 1, this->toBeEdited->getMaxValue(), croppedPixels);
+    Image* croppedImage = new Image(this->image->getType(), maxX - minX + 1, maxY - minY + 1, this->image->getMaxValue(), croppedPixels);
+    this->deallocate();
+    this->image = croppedImage;
+    this->unsavedChanges = true;
+    this->loadGrayscalePixels(); 
 }
 
-Image* ImageEditor::resize(unsigned int newWidth, unsigned int newHeight)
+void ImageEditor::resize(unsigned int newWidth, unsigned int newHeight)
 {
     if (newWidth <= 0 || newHeight <= 0)
     {
         throw std::invalid_argument("New width and new height must be bigger than 0");
     }
-    int width = this->toBeEdited->getWidth();
-    int height = this->toBeEdited->getHeight();
+    int width = this->image->getWidth();
+    int height = this->image->getHeight();
     std::vector<RGB> resizedPixels;
 
     for (std::size_t i = 0; i < newHeight; ++i)
@@ -378,22 +488,26 @@ Image* ImageEditor::resize(unsigned int newWidth, unsigned int newHeight)
             newI = std::min(newI, height - 1);
             newJ = std::min(newJ, width - 1);
 
-            resizedPixels.push_back((*this->toBeEdited)[newI*width + newJ]);
+            resizedPixels.push_back((*this->image)[newI*width + newJ]);
         }
     }
 
-    return new Image(this->toBeEdited->getType(), newWidth, newHeight, this->toBeEdited->getMaxValue(), resizedPixels);
+    Image* resizedImage = new Image(this->image->getType(), newWidth, newHeight, this->image->getMaxValue(), resizedPixels);
+    this->deallocate();
+    this->image = resizedImage;
+    this->unsavedChanges = true;
+    this->loadGrayscalePixels(); 
 }
 
-Image* ImageEditor::resize(double percentage)
+void ImageEditor::resize(double percentage)
 {
     if (percentage <= 0)
     {
         throw std::invalid_argument("The percentage must be bigger than 0");
     }
 
-    unsigned int newWidth = static_cast<unsigned int>(round(static_cast<double>(this->toBeEdited->getWidth())*percentage/100));
-    unsigned int newHeight = static_cast<unsigned int>(round(static_cast<double>(this->toBeEdited->getHeight())*percentage/100));
+    unsigned int newWidth = static_cast<unsigned int>(round(static_cast<double>(this->image->getWidth())*percentage/100));
+    unsigned int newHeight = static_cast<unsigned int>(round(static_cast<double>(this->image->getHeight())*percentage/100));
 
-    return this->resize(newWidth, newHeight);
+    this->resize(newWidth, newHeight);
 }

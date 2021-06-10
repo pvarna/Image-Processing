@@ -4,11 +4,11 @@
 #include <iostream>
 #include <fstream>
 
-ImageReader::ImageReader(std::string path)
+ImageReader::ImageReader(std::string path) : ImageOpener(path, std::ios::in) 
 {
-    this->type = this->getTypeOfImage(path);
+    this->type = this->getTypeOfImage();
 
-    this->readData(path);
+    this->readData();
 }
 
 Image* ImageReader::loadImage()
@@ -135,9 +135,9 @@ std::vector<std::string> ImageReader::parseString(std::string string)
     return result;
 }
 
-ImageType ImageReader::getTypeOfImage(std::string path)
+ImageType ImageReader::getTypeOfImage()
 {
-    std::string fileExtension = path.substr(path.find_last_of('.') + 1);
+    std::string fileExtension = this->path.substr(path.find_last_of('.') + 1);
 
     if (fileExtension.size() != EXTENSION_LENGTH || 
         (fileExtension != "pbm" && fileExtension != "pgm" && fileExtension != "ppm"))
@@ -145,18 +145,10 @@ ImageType ImageReader::getTypeOfImage(std::string path)
         return ImageType::UNKNOWN;
     }
 
-    std::ifstream file(path);
-
-    if (!file.is_open())
-    {
-        throw std::invalid_argument("Problem while opening the file");
-    }
-
     std::string firstLine;
     std::getline(file, firstLine);
 
     file.seekg(0, std::ios::beg);
-    file.close();
 
     std::string magicNumber = "";
     magicNumber.push_back(firstLine[0]);
@@ -184,15 +176,9 @@ ImageType ImageReader::getTypeOfImage(std::string path)
     return ImageType::UNKNOWN;
 }
 
-void ImageReader::readData(std::string path)
+void ImageReader::readData()
 {
-    std::ifstream file(path.c_str());
-    file.seekg(MAGIC_NUMBER_LENGTH, std::ios::beg);
-
-    if (!file.is_open())
-    {
-        throw std::invalid_argument("Problem while opening the file");
-    }
+    this->file.seekg(MAGIC_NUMBER_LENGTH, std::ios::beg);
 
     std::string currentLine;
     while (std::getline(file, currentLine))
@@ -209,8 +195,6 @@ void ImageReader::readData(std::string path)
             this->data.push_back(dataCurrentLine[i]);
         }
     }
-
-    file.close();
 }
 
 Image* ImageReader::loadBitMap()

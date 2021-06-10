@@ -2,21 +2,20 @@
 
 #include "image.h"
 #include "enums.h"
+#include "imageOpener.h"
 #include <string>
-class ImageWriter
+class ImageWriter : public ImageOpener
 {
 private:
     Image* image;
-    std::string path;
-    ImageType type;
 
-    bool fileExists(std::string path);
+    bool fileExists();
 
-    void saveMetaData(std::ofstream& file);
+    void saveMetaData();
 
-    void saveBitMap(std::ofstream& file);
-    void saveGrayMap(std::ofstream& file);
-    void savePixMap(std::ofstream& file);
+    void saveBitMap();
+    void saveGrayMap();
+    void savePixMap();
 
 public:
     ImageWriter(std::string path, Image* image);
