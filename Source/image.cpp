@@ -5,7 +5,6 @@
 
 Image::Image(ImageType type, unsigned int width, unsigned int height, unsigned int maxValue, std::vector<RGB> pixels)
 {
-    std::cout << "Image constructed" << std::endl;
     if (type == ImageType::UNKNOWN)
     {
         throw std::invalid_argument("Invalid image type");
@@ -76,7 +75,12 @@ unsigned int Image::getMaxValue() const
     return this->maxValue;
 }
 
-RGB Image::operator [] (std::size_t index) const
+void Image::setType(ImageType type)
+{
+    this->type = type;
+}
+
+RGB& Image::operator [] (std::size_t index)
 {
     if (index >= this->pixels.size())
     {

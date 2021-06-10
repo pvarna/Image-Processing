@@ -24,7 +24,9 @@ public:
     unsigned int getHeight() const;
     unsigned int getMaxValue() const;
 
-    RGB operator [] (std::size_t index) const;
+    void setType(ImageType type);
+
+    RGB& operator [] (std::size_t index);
 
     //virtual ~Image();
 };

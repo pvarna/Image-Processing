@@ -17,11 +17,13 @@ private:
     bool isNumber(std::string str);
 
     void printHelp();
+    void printDitheringAlgorithms();
 
 public:
     ImageProcessor();
 
     void execute(CommandLine command);
+    void start();
     // ImageProcessor(const ImageProcessor& other) = delete;
     // ImageProcessor& operator = (const ImageProcessor& other) = delete;
     // ~ImageProcessor();

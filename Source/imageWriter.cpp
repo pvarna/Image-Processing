@@ -1,9 +1,10 @@
 #include "../Headers/imageWriter.h"
+#include "../Headers/imageReader.h"
 #include <cstring>
 #include <fstream>
 #include <iostream>
 
-ImageWriter::ImageWriter(std::string path, Image* image) : ImageOpener(path, std::ios::out)
+ImageWriter::ImageWriter(std::string path, Image* image) : ImageOpener(path, std::ios::out | std::ios::trunc)
 {
     if (!image)
     {
@@ -13,16 +14,6 @@ ImageWriter::ImageWriter(std::string path, Image* image) : ImageOpener(path, std
     this->image = image;
     this->path = path;
     this->type = image->getType();
-}
-
-bool ImageWriter::fileExists()
-{
-    std::ifstream file(this->path.c_str());
-
-    bool result = file.good();
-    file.close();
-
-    return result;
 }
 
 void ImageWriter::saveMetaData()
@@ -108,26 +99,6 @@ void ImageWriter::savePixMap()
 
 void ImageWriter::saveImage()
 {
-    if (fileExists())
-    {
-        std::cout << "This file already exists. Are you sure you want to overwrite the data in the file? [Y/n]: ";
-        char choice;
-        do
-        {
-            std::cin >> choice;
-            std::cin.ignore();
-            if (tolower(choice) != 'y' && tolower(choice) != 'n' && choice != '\n')
-            {
-                std::cout << "Invalid choice! Try again [Y/n]: ";
-            }
-        } while (tolower(choice) != 'y' && tolower(choice) != 'n' && choice != '\n');
-
-        if (tolower(choice) == 'n')
-        {
-            return;
-        }
-    }
-
     file.seekp(0, std::ios::beg);
 
     switch (this->type)

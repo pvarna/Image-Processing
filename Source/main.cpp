@@ -3,13 +3,17 @@
 #include <fstream>
 #include <iostream>
 
-int main ()
+int main (int argv, char** argc)
 {
     ImageProcessor imageProcessor;
 
-    imageProcessor.readImage("blue.ppm");
-    imageProcessor.resize();
+    if (argv == 2)
+    {
+        std::string path(argc[1]);
+        imageProcessor.execute(CommandLine("open " + path));
+    }
 
-    imageProcessor.saveImage("blueResize3.ppm");
+    imageProcessor.start();
+
     return 0;
 }

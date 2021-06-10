@@ -32,7 +32,7 @@ Image* ImageEditor::getImage() const
 
 void ImageEditor::getFileName(std::string path)
 {
-    std::size_t found = path.find_first_of("/\\");
+    std::size_t found = path.find_last_of("/\\");
 
     if (found == std::string::npos)
     {
@@ -66,9 +66,13 @@ bool ImageEditor::close()
     }
 
     this->deallocate();
+    this->unsavedChanges = false;
+    if (!this->currentFileName.empty())
+    {
+        std::cout << "Successfully closed " << this->currentFileName << std::endl;
+    }
     this->currentFileName.clear();
     this->currentFileName = "";
-    this->unsavedChanges = false;
 
     return true;
 }
@@ -78,6 +82,7 @@ void ImageEditor::deallocate()
     if (this->image)
     {
         delete this->image;
+        this->image = nullptr;
     }
     this->grayscalePixels.clear();
 }
@@ -93,29 +98,120 @@ void ImageEditor::loadGrayscalePixels()
     }
 }
 
+bool ImageEditor::fileExists(std::string path)
+{
+    std::ifstream file(path.c_str());
+
+    bool result = file.good();
+    file.close();
+
+    return result;
+}
+
 void ImageEditor::openImage(std::string path)
 {
     ImageReader reader(path);
 
     this->image = reader.loadImage();
+
     this->loadGrayscalePixels();
     this->getFileName(path);
+    std::cout << "Successfully opened " << this->currentFileName << std::endl;
 }
 
-void ImageEditor::saveImage(std::string path)
+void ImageEditor::saveImage(std::string path, bool save)
 {
+    if (save && path.empty())
+    {
+        throw std::invalid_argument("No file is currently opened");
+    }
+
+    if (!save)
+    {
+        if (this->fileExists(path))
+        {
+            std::cout << "This file already exists. Are you sure you want to overwrite the data in the file? [Y/n]: ";
+            char choice;
+            do
+            {
+                std::cin >> choice;
+                std::cin.ignore();
+                if (tolower(choice) != 'y' && tolower(choice) != 'n')
+                {
+                    std::cout << "Invalid choice! Try again [Y/n]: ";
+                }
+            } while (tolower(choice) != 'y' && tolower(choice) != 'n');
+
+            if (tolower(choice) == 'n')
+            {
+                return;
+            }
+        }
+    }
+
+    std::size_t found = path.find_last_of('.');
+    if (found == std::string::npos)
+    {
+        throw std::invalid_argument("There is not a file extension in the path");
+    }
+
+    std::string fileExtension = path.substr(path.find_last_of('.') + 1);
+
+    if (fileExtension != "pbm" && fileExtension != "pgm" && fileExtension != "ppm")
+    {
+        throw std::invalid_argument("Invalid file extension");
+    }
+
+    if (this->image->getType() == ImageType::BITMAP && fileExtension != "pbm")
+    {
+        if (fileExtension == "pgm")
+        {
+            this->convertBitMaptoGrayMap();
+        }
+        else if (fileExtension == "ppm")
+        {
+            this->convertBitMaptoPixMap();
+        }
+    }
+    else if (this->image->getType() == ImageType::GRAYMAP && fileExtension != "pgm")
+    {
+        if (fileExtension == "pbm")
+        {
+            this->convertGrayMaptoBitMap();
+        }
+        else if (fileExtension == "ppm")
+        {
+            this->convertGrayMaptoPixMap();
+        }
+    }
+    else if (this->image->getType() == ImageType::PIXMAP && fileExtension != "ppm")
+    {
+        if (fileExtension == "pbm")
+        {
+            this->convertPixMaptoBitMap();
+        }
+        else if (fileExtension == "pgm")
+        {
+            this->convertPixMaptoGrayMap();
+        }
+    }
+
     ImageWriter writer(path, this->image);
 
     writer.saveImage();
     this->unsavedChanges = false;
+    this->getFileName(path);
+
+    std::cout << "Successfully saved " << this->currentFileName << std::endl;
 }
 
 void ImageEditor::createImage(unsigned int width, unsigned int height, std::string hexColor)
 {
     this->image = new Image(width, height, hexColor);
     this->loadGrayscalePixels();
-    this->currentFileName = "new file";
+    this->currentFileName = "";
     this->unsavedChanges = true;
+    std::cout << "Created new document with size " << width << "x" << height << " and filled with " <<  hexColor << std::endl;
 }
 
 int ImageEditor::RGBToGrayscale(RGB color)
@@ -343,6 +439,8 @@ void ImageEditor::errorDiffusionDithering(ErrorDiffusionAlrogithm alrorithm)
     this->image = ditheredImage;
     this->unsavedChanges = true;
     this->loadGrayscalePixels();
+
+    std::cout << "Successfully dithered " << this->currentFileName << std::endl;
 }
 
 void ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
@@ -413,10 +511,12 @@ void ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
     this->deallocate();
     this->image = ditheredImage;
     this->unsavedChanges = true;
-    this->loadGrayscalePixels();   
+    this->loadGrayscalePixels();  
+
+    std::cout << "Successfully dithered " << this->currentFileName << std::endl; 
 }
 
-void ImageEditor::cropImage(int x1, int y1, int x2, int y2)
+void ImageEditor::crop(int x1, int y1, int x2, int y2)
 {
     int width = this->image->getWidth();
     int height = this->image->getHeight();
@@ -467,6 +567,8 @@ void ImageEditor::cropImage(int x1, int y1, int x2, int y2)
     this->image = croppedImage;
     this->unsavedChanges = true;
     this->loadGrayscalePixels(); 
+
+    std::cout << "Successfully cropped " << this->currentFileName << std::endl;
 }
 
 void ImageEditor::resize(unsigned int newWidth, unsigned int newHeight)
@@ -497,6 +599,8 @@ void ImageEditor::resize(unsigned int newWidth, unsigned int newHeight)
     this->image = resizedImage;
     this->unsavedChanges = true;
     this->loadGrayscalePixels(); 
+
+    std::cout << "Successfully resized " << this->currentFileName << std::endl;
 }
 
 void ImageEditor::resize(double percentage)
@@ -510,4 +614,41 @@ void ImageEditor::resize(double percentage)
     unsigned int newHeight = static_cast<unsigned int>(round(static_cast<double>(this->image->getHeight())*percentage/100));
 
     this->resize(newWidth, newHeight);
+}
+
+void ImageEditor::convertBitMaptoGrayMap()
+{
+    this->image->setType(ImageType::GRAYMAP);
+}
+void ImageEditor::convertBitMaptoPixMap()
+{
+    this->image->setType(ImageType::PIXMAP);
+}
+void ImageEditor::convertGrayMaptoBitMap()
+{
+    this->errorDiffusionDithering(DEFAULT_ALGORITHM);
+    this->image->setType(ImageType::BITMAP);
+}
+void ImageEditor::convertGrayMaptoPixMap()
+{
+    this->image->setType(ImageType::PIXMAP);
+}
+void ImageEditor::convertPixMaptoBitMap()
+{
+    this->errorDiffusionDithering(DEFAULT_ALGORITHM);
+    this->image->setType(ImageType::BITMAP);
+}
+void ImageEditor::convertPixMaptoGrayMap()
+{
+    unsigned int width = this->image->getWidth();
+    unsigned int height = this->image->getHeight();
+    for (std::size_t i = 0; i < width * height; ++i)
+    {
+        int grayScale = this->RGBToGrayscale((*this->image)[i]);
+        (*this->image)[i].red = grayScale;
+        (*this->image)[i].green = grayScale;
+        (*this->image)[i].blue = grayScale;
+    }
+
+    this->image->setType(ImageType::GRAYMAP);
 }

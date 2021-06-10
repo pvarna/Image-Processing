@@ -1,6 +1,7 @@
 #pragma once
 
-#include <stdexcept>
+#include "enums.h"
+#include <cstddef>
 
 const std::size_t MAGIC_NUMBER_LENGTH = 2;
 const unsigned int DEFAULT_MAX_VALUE = 255;
@@ -13,13 +14,9 @@ const unsigned int LETTER_TO_HEX_LALUE_DIFFERENCE = 55;
 const unsigned int RGB_WHITE = 255;
 const unsigned int RGB_BLACK = 0;
 
-const std::size_t NUMBER_OF_COMMANDS_WITH_ONE_ARGUMENT = 5;
-const std::size_t NUMBER_OF_COMMANDS_WITH_TWO_ARGUMENTS = 3;
-const std::size_t NUMBER_OF_COMMANDS_WITH_THREE_ARGUMENTS = 1;
-const std::size_t NUMBER_OF_COMMANDS_WITH_FOUR_ARGUMENTS = 1;
-const std::size_t NUMBER_OF_COMMANDS_WITH_FIVE_ARGUMENTS = 1;
-
 const std::size_t NUMBER_OF_COMMANDS = 10;
 
 const std::size_t MIN_NUMBER_OF_ARGUMENTS = 1;
 const std::size_t MAX_NUMBER_OF_ARGUMENTS = 5;
+
+const ErrorDiffusionAlrogithm DEFAULT_ALGORITHM = ErrorDiffusionAlrogithm::FLOYD_STEINBERG;

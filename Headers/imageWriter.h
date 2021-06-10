@@ -9,8 +9,6 @@ class ImageWriter : public ImageOpener
 private:
     Image* image;
 
-    bool fileExists();
-
     void saveMetaData();
 
     void saveBitMap();

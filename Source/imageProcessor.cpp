@@ -1,5 +1,6 @@
 #include "../Headers/imageProcessor.h"
 #include <iostream>
+#include <limits>
 
 std::string ImageProcessor::validCommands[NUMBER_OF_COMMANDS] = {"NEW", "OPEN", "CLOSE", "SAVE", "SAVEAS", "EXIT", "HELP", "DITHER", "RESIZE", "CROP"};
 
@@ -22,6 +23,26 @@ void ImageProcessor::printHelp()
     std::cout << "resize <newWidth> <newHeight> " << '\t' << "resizes the currently opened image setting new dimensions <newWidth> and <newHeight>" << std::endl;   
     std::cout << "resize <percentage>           " << '\t' << "resizes the currently opened image by <percentage>" << std::endl;
     std::cout << "exit                          " << '\t' << "exits the program" << std::endl;
+}
+
+void ImageProcessor::printDitheringAlgorithms()
+{
+    std::cout << "The following dithering algorithms are supported: " << std::endl;
+    std::cout << "----- Error-diffusion dithering algorithms -----" << std::endl;
+    std::cout << "01. Basic one-dimensional dithering" << std::endl;
+    std::cout << "02. Basic two-dimensional dithering" << std::endl;
+    std::cout << "03. Floyd-Steinberg dithering" << std::endl;
+    std::cout << "04. Floyd-Steinberg False dithering" << std::endl;
+    std::cout << "05. Jarvis, Judice, and Ninke dithering" << std::endl;
+    std::cout << "06. Stucki dithering" << std::endl;
+    std::cout << "07. Atkinson dithering" << std::endl;
+    std::cout << "08. Burkes dithering" << std::endl;
+    std::cout << "09. Sierra dithering" << std::endl;
+    std::cout << "10. Two-Row Sierra dithering" << std::endl;
+    std::cout << "11. Sierra Lite dithering" << std::endl;
+    std::cout << "--------- Ordered dithering algorithms ---------" << std::endl;
+    std::cout << "12. 4x4 dithering" << std::endl;
+    std::cout << "13. 8x8 dithering" << std::endl;
 }
 
 inline bool ImageProcessor::isDigit(char ch)
@@ -135,47 +156,72 @@ void ImageProcessor::execute(CommandLine command)
 {
     if (!isValid(command))
     {
-        throw std::invalid_argument("Please try again");
+        return;
     }
 
     std::string mainCommand = command[0];
+    std::size_t size = command.getSize();
     
     if (mainCommand == "EXIT")
     {
         this->stopProgram = true;
+        if (this->editor.getImage())
+        {
+            bool close = this->editor.close();
+        }
         std::cout << "Exiting the program..." << std::endl;
     }
     else if (mainCommand == "CLOSE")
     {
-        this->editor.close();
-    }
-    else if (mainCommand == "NEW" || mainCommand == "OPEN")
-    {
-        bool successfullClose = true;
-        if (this->editor.getImage())
+        bool close = true;
+        if (!this->editor.getImage())
         {
-            successfullClose = this->editor.close();
+            std::cout << "No image is currently loaded" << std::endl;
+            close = false;
         }
 
-        if (successfullClose)
+        if (close)
         {
-            if (mainCommand == "OPEN")
-            {
-                this->editor.openImage(command[1]);
-            }
-            else
-            {
-                this->editor.createImage(std::stoi(command[1]), std::stoi(command[2]), command[3]);
-            }
+            bool close = this->editor.close();
+        }
+    }
+    else if (mainCommand == "NEW")
+    {
+        bool close = this->editor.close();
+        if (close)
+        {
+            this->editor.createImage(std::stoi(command[1]), std::stoi(command[2]), command[3]);
+        }
+    }
+    else if (mainCommand == "OPEN")
+    {
+        bool close = this->editor.close();
+        if (close)
+        {
+            this->editor.openImage(command[1]);
         }
     }
     else if (mainCommand == "SAVE")
     {
-        this->editor.saveImage(this->editor.getCurrentFileName());
+        if (this->editor.getImage())
+        {
+            this->editor.saveImage(this->editor.getCurrentFileName(), true);
+        }
+        else
+        {
+            throw std::invalid_argument("No file is currently opened");
+        }
     }
     else if (mainCommand == "SAVEAS")
     {
-        this->editor.saveImage(command[1]);
+        if (this->editor.getImage())
+        {
+            this->editor.saveImage(command[1], false);
+        }
+        else
+        {
+            throw std::invalid_argument("No file is currently opened");
+        }
     }
     else if (mainCommand == "HELP")
     {
@@ -183,93 +229,150 @@ void ImageProcessor::execute(CommandLine command)
     }
     else if (mainCommand == "DITHER")
     {
-        
+        if (this->editor.getImage())
+        {
+            int option;
+            this->printDitheringAlgorithms();
+
+            do
+            {
+                std::cout << "Please choose an option: ";
+                std::cin >> option;
+                while (!std::cin)
+                {
+                    std::cin.clear();
+                    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                    std::cout << "Please enter a number: ";
+                    std::cin >> option;
+                }
+                std::cin.ignore();
+
+                std::cout << std::endl;
+                
+                switch (option)
+                {
+                    case 1:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::BASIC_ONE_DIMENSIONAL);
+                        break;
+
+                    case 2:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::BASIC_TWO_DIMENSIONAL);
+                        break;
+
+                    case 3:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::FLOYD_STEINBERG);
+                        break;
+
+                    case 4:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::FLOYD_STEINBERG_FALSE);
+                        break;
+
+                    case 5:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::JARVIS_JUDICE_NINKE);
+                        break;
+
+                    case 6:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::STUCKI);
+                        break;
+
+                    case 7:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::ATKINSON);
+                        break;
+
+                    case 8:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::BURKES);
+                        break;
+
+                    case 9:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::SIERRA);
+                        break;
+
+                    case 10:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::SIERRA_TWO_ROWS);
+                        break;
+
+                    case 11:
+                        this->editor.errorDiffusionDithering(ErrorDiffusionAlrogithm::SIERRA_LITE);
+                        break;
+
+                    case 12:
+                        this->editor.orderedDithering(OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX);
+                        break;
+
+                    case 13:
+                        this->editor.orderedDithering(OrderedDitheringAlgorithm::EIGHT_X_EIGHT_BAYER_MATRIX);
+                        break;
+
+                    default:
+                        std::cout << "Invalid option! Try again!" << std::endl;
+                        break;
+                }
+            } while (option < 1 || option > 13);
+        }
+        else
+        {
+            throw std::invalid_argument("No file is currently opened");
+        }
+    }
+    else if (mainCommand == "CROP")
+    {
+        if (this->editor.getImage())
+        {
+            this->editor.crop(std::stoi(command[1]), std::stoi(command[2]), std::stoi(command[3]), std::stoi(command[4]));
+        }
+        else
+        {
+            throw std::invalid_argument("No file is currently opened");
+        }
+    }
+    else if (mainCommand == "RESIZE")
+    {
+        if (size == 2)
+        {
+            if (this->editor.getImage())
+            {
+                this->editor.resize(std::stoi(command[1]));
+            }
+            else
+            {
+                throw std::invalid_argument("No file is currently opened");
+            }
+        }
+        else if (size == 3)
+        {
+            if (this->editor.getImage())
+            {
+                this->editor.resize(std::stoi(command[1]), std::stoi(command[2]));
+            }
+            else
+            {
+                throw std::invalid_argument("No file is currently opened");
+            }
+        }
     }
 }
 
-// void ImageProcessor::openImage(std::string path)
-// {
-//     this->reader = new ImageReader(path);
+void ImageProcessor::start()
+{
+    while (true)
+    {
+        std::string command;
+        std::cout << "> ";
+        std::getline(std::cin, command);
 
-//     if (this->image)
-//     {
-//         delete this->image;
-//     }
-//     this->image = this->reader->loadImage();
-// }
+        CommandLine cmd(command);
+        try
+        {
+            this->execute(command);
+        }
+        catch(const std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
 
-// void ImageProcessor::saveImage(std::string path)
-// {
-//     if (!this->image)
-//     {
-//         throw std::invalid_argument("No image is loaded");
-//     }
-
-//     this->writer = new ImageWriter(path, this->image);
-
-//     this->writer->saveImage();
-// }
-
-// void ImageProcessor::doDithering()
-// {
-//     this->editor = new ImageEditor(this->image);
-
-//     if (!this->image)
-//     {
-//         std::invalid_argument("No image is loaded");
-//     }
-
-//     this->image = editor->orderedDithering(OrderedDitheringAlgorithm::EIGHT_X_EIGHT_BAYER_MATRIX);
-// }
-
-// void ImageProcessor::crop()
-// {
-//     this->editor = new ImageEditor(this->image);
-
-//     if (!this->image)
-//     {
-//         std::invalid_argument("No image is loaded");
-//     }
-
-//     this->image = editor->cropImage(100, 100, 300, 300);
-// }
-
-// void ImageProcessor::resize()
-// {
-//     this->editor = new ImageEditor(this->image);
-
-//     if (!this->image)
-//     {
-//         std::invalid_argument("No image is loaded");
-//     }
-
-//     this->image = editor->resize(200);
-// }
-
-// ImageProcessor::~ImageProcessor()
-// {
-//     if (this->image)
-//     {
-//         delete this->image;
-//     }
-
-//     if (this->command)
-//     {
-//         delete this->command;
-//     }
-
-//     if (this->reader)
-//     {
-//         delete this->reader;
-//     }
-
-//     if (this->writer)
-//     {
-//         delete this->writer;
-//     }
-
-//     if (this->editor)
-//     {
-//         delete this->editor;
-//     }
-// }
+        if (this->stopProgram)
+        {
+            break;
+        }
+    }
+}

@@ -14,6 +14,7 @@ private:
     void deallocate();
 
     void getFileName(std::string path);
+    bool fileExists(std::string path);
 
     int RGBToGrayscale(RGB color);
 
@@ -29,6 +30,13 @@ private:
 
     void spreadError(std::size_t currentI, std::size_t currentJ, unsigned int height, unsigned int width, int coefficients[3][5], int error, std::vector<int>& pixels, bool isShiftable, int divisor);
 
+    void convertBitMaptoGrayMap();
+    void convertBitMaptoPixMap();
+    void convertGrayMaptoBitMap();
+    void convertGrayMaptoPixMap();
+    void convertPixMaptoBitMap();
+    void convertPixMaptoGrayMap();
+
 public:
     ImageEditor();
     ImageEditor(const ImageEditor& other) = delete;
@@ -40,13 +48,13 @@ public:
 
     void createImage(unsigned int width, unsigned int height, std::string hexColor);
     void openImage(std::string path);
-    void saveImage(std::string path);
+    void saveImage(std::string path, bool save);
     bool close();
 
     void errorDiffusionDithering(ErrorDiffusionAlrogithm algorithm);
     void orderedDithering(OrderedDitheringAlgorithm algorithm);
 
-    void cropImage(int x1, int y1, int x2, int y2);
+    void crop(int x1, int y1, int x2, int y2);
     void resize(unsigned int newWidth, unsigned int newHeight);
     void resize(double percentage);
 };
