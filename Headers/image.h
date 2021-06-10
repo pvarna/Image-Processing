@@ -8,7 +8,7 @@
 
 class Image
 {
-protected:
+private:
     ImageType type;
     unsigned int width;
     unsigned int height;
@@ -27,6 +27,4 @@ public:
     void setType(ImageType type);
 
     RGB& operator [] (std::size_t index);
-
-    //virtual ~Image();
 };

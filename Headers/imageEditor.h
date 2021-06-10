@@ -21,13 +21,9 @@ private:
     void loadGrayscalePixels();
 
     bool isCloserToZero(int value, int maxValue);
-
     bool isInsideTheImage(std::size_t i, std::size_t j, unsigned int height, unsigned int width);
-
     void getCoefficientTable(ErrorDiffusionAlrogithm algorithm, int coefficients[3][5], bool& isShiftable, int& divisor);
-
     void addError(int& pixel, int error, int coefficient, bool isShiftable, int divisor);
-
     void spreadError(std::size_t currentI, std::size_t currentJ, unsigned int height, unsigned int width, int coefficients[3][5], int error, std::vector<int>& pixels, bool isShiftable, int divisor);
 
     void convertBitMaptoGrayMap();
