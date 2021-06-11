@@ -94,11 +94,11 @@ int RGB::hexToDecimal(std::string hex)
 
         if (this->isDigit(hex[i]))
         {
-            currentValue = current - DIGIT_TO_HEX_LALUE_DIFFERENCE;
+            currentValue = current - DIGIT_TO_HEX_VALUE_DIFFERENCE;
         }
         else if (this->isHexLetter(hex[i]))
         {
-            currentValue = current - LETTER_TO_HEX_LALUE_DIFFERENCE;
+            currentValue = current - LETTER_TO_HEX_VALUE_DIFFERENCE;
         }
 
         decimal += currentValue * pow(16, (hexSize - i - 1));

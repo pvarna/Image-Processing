@@ -1,12 +1,6 @@
 #include "../Headers/commandLine.h"
 #include <stdexcept>
 
-// std::string CommandLine::validCommandsOneArgument[NUMBER_OF_COMMANDS_WITH_ONE_ARGUMENT] = {"HELP", "EXIT", "CLOSE", "SAVE", "DITHER"};
-// std::string CommandLine::validCommandsTwoArguments[NUMBER_OF_COMMANDS_WITH_TWO_ARGUMENTS] = {"OPEN", "SAVEAS", "RESIZE"};
-// std::string CommandLine::validCommandsThreeArguments[NUMBER_OF_COMMANDS_WITH_THREE_ARGUMENTS] = {"RESIZE"};
-// std::string CommandLine::validCommandsFourArguments[NUMBER_OF_COMMANDS_WITH_FOUR_ARGUMENTS] = {"NEW"};
-// std::string CommandLine::validCommandsFourArguments[NUMBER_OF_COMMANDS_WITH_FIVE_ARGUMENTS] = {"CROP"};
-
 std::size_t CommandLine::getSize() const
 {
     return this->arguments.size();
@@ -148,104 +142,6 @@ void CommandLine::parseCommandLine(std::string commandLine)
     this->arguments[0] = stringToUpper(this->arguments[0]);
 }
 
-/*bool CommandLine::isMainCommandValid(std::string command)
-{
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_ONE_ARGUMENT; ++i)
-    {
-        if (command == CommandLine::validCommandsOneArgument[i])
-        {
-            return true;
-        }
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_TWO_ARGUMENTS; ++i)
-    {
-        if (command == CommandLine::validCommandsTwoArguments[i])
-        {
-            return true;
-        }
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_THREE_ARGUMENTS; ++i)
-    {
-        if (command == CommandLine::validCommandsThreeArguments[i])
-        {
-            return true;
-        }
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_FOUR_ARGUMENTS; ++i)
-    {
-        if (command == CommandLine::validCommandsFourArguments[i])
-        {
-            return true;
-        }
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_FIVE_ARGUMENTS; ++i)
-    {
-        if (command == CommandLine::validCommandsFiveArguments[i])
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool CommandLine::isNumberOfArgumentsCorrect(std::vector<std::string> arguments)
-{
-    std::size_t numberOfArguments = arguments.size();
-    std::string mainCommand = arguments[0];
-
-    if (numberOfArguments < MIN_NUMBER_OF_ARGUMENTS || numberOfArguments > MAX_NUMBER_OF_ARGUMENTS)
-    {
-        return false;
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_ONE_ARGUMENT; ++i)
-    {
-        if (mainCommand == CommandLine::validCommandsOneArgument[i])
-        {
-            return numberOfArguments == 1;
-        }
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_TWO_ARGUMENTS; ++i)
-    {
-        if (mainCommand == CommandLine::validCommandsTwoArguments[i])
-        {
-            return numberOfArguments == 2;
-        }
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_THREE_ARGUMENTS; ++i)
-    {
-        if (mainCommand == CommandLine::validCommandsThreeArguments[i])
-        {
-            return numberOfArguments == 3;
-        }
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_FOUR_ARGUMENTS; ++i)
-    {
-        if (mainCommand == CommandLine::validCommandsThreeArguments[i])
-        {
-            return numberOfArguments == 4;
-        }
-    }
-
-    for (std::size_t i = 0; i < NUMBER_OF_COMMANDS_WITH_FIVE_ARGUMENTS; ++i)
-    {
-        if (mainCommand == CommandLine::validCommandsThreeArguments[i])
-        {
-            return numberOfArguments == 5;
-        }
-    }
-
-    return false;
-}*/
-
 CommandLine::CommandLine(std::string commandLine)
 {
     if (commandLine.length() == 0)
@@ -259,66 +155,7 @@ CommandLine::CommandLine(std::string commandLine)
     }
 
     this->parseCommandLine(commandLine);
-
-    /*if (!isMainCommandValid(arguments[0]))
-    {
-        throw std::invalid_argument("Invalid main command!");
-    }
-
-    if (!isNumberOfArgumentsCorrect(arguments))
-    {
-        throw std::invalid_argument("Invalid number of arguments!");
-    }
-
-    this->mainCommand = arguments[0];
-    if (arguments.size() == 2)
-    {
-        this->secondArgument = arguments[1];
-    }
-    else if (arguments.size() == 3)
-    {
-        this->secondArgument = arguments[1];
-        this->thirdArgument = arguments[2];
-    }
-    else if (arguments.size() == 4)
-    {
-        this->secondArgument = arguments[1];
-        this->thirdArgument = arguments[2];
-        this->fourthArgument = arguments[3];
-    }
-    else if (arguments.size() == 5)
-    {
-        this->secondArgument = arguments[1];
-        this->thirdArgument = arguments[2];
-        this->fourthArgument = arguments[3];
-        this->fifthArgument = arguments[4];
-    }*/
 }
-
-/*std::string CommandLine::getMainCommand() const
-{
-    return this->mainCommand;
-}
-
-std::string CommandLine::getSecondArgument() const
-{
-    return this->secondArgument;
-}
-
-std::string CommandLine::getThirdArgument() const
-{
-    return this->thirdArgument;
-}
-
-std::string CommandLine::getFourthArgument() const
-{
-    return this->fourthArgument;
-}
-
-std::string CommandLine::getFifthArgument() const
-{
-    return this->fifthArgument;
-}*/
 
 std::string& CommandLine::operator [] (std::size_t index)
 {

@@ -1,4 +1,3 @@
-#include "../Headers/imageReader.h"
 #include "../Headers/imageProcessor.h"
 #include <fstream>
 #include <iostream>
