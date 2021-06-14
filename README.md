@@ -7,11 +7,11 @@ The program can read image from a file with one of the extensions: .ppm, .pgm, .
 
 # Exemple:
 We have this image in ppm format:
-![Federer][federer.jpg]
+![Federer](federer.jpg)
 
 
 And after Floyd-Steinberg algorithm we have this:
-![FedererFloydSteinberf][fedFloyd.jpg]
+![FedererFloydSteinberf](fedFloyd.jpg)
 
 *the images are jpg because ppm is not supported but this is the idea*
 
