@@ -4,15 +4,21 @@
 
 int main (int argv, char** argc)
 {
-    ImageProcessor imageProcessor;
-
     if (argv == 2)
     {
         std::string path(argc[1]);
-        imageProcessor.execute(CommandLine("open " + path));
+        try
+        {
+            ImageProcessor::getInstance().execute(CommandLine("open " + path));
+        }
+        catch(const std::exception& e)
+        {
+            std::cout << e.what() << std::endl;
+        }
+        
     }
 
-    imageProcessor.start();
+    ImageProcessor::getInstance().start();
 
     return 0;
 }

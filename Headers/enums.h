@@ -1,5 +1,14 @@
+/** @file enums.h
+ *  @brief Enum classes for the different types of images and algorithms
+ * 
+ *  @author Peter Kolev
+ */
+
 #pragma once
 
+/**
+ * @class ImageType
+ */
 enum class ImageType
 {
     UNKNOWN = -1,
@@ -8,7 +17,10 @@ enum class ImageType
     PIXMAP
 };
 
-enum class ErrorDiffusionAlrogithm
+/**
+ * @class ErrorDiffusionAlrogithmType
+ */
+enum class ErrorDiffusionAlrogithmType
 {
     UNKNOWN = -1,
     BASIC_ONE_DIMENSIONAL,
@@ -24,7 +36,10 @@ enum class ErrorDiffusionAlrogithm
     SIERRA_LITE
 };
 
-enum class OrderedDitheringAlgorithm
+/**
+ * @class OrderedDitheringAlgorithmType
+ */
+enum class OrderedDitheringAlgorithmType
 {
     UNKNOWN = -1,
     FOUR_X_FOUR_BAYER_MATRIX,

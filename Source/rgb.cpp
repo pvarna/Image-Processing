@@ -1,5 +1,5 @@
 #include "../Headers/rgb.h"
-#include "../Headers/consts.h"
+
 #include <cstddef>
 #include <cmath>
 #include <iostream>

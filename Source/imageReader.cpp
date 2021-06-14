@@ -1,39 +1,12 @@
 #include "../Headers/imageReader.h"
-#include "../Headers/consts.h"
+
 #include <cstddef>
 #include <iostream>
 #include <fstream>
 
 ImageReader::ImageReader(std::string path) : ImageOpener(path, std::ios::in) 
 {
-    this->type = this->getTypeOfImage();
-
     this->readData();
-}
-
-Image* ImageReader::loadImage()
-{
-    Image* image = nullptr;
-
-    switch (this->type)
-    {
-    case ImageType::BITMAP:
-        image = this->loadBitMap();
-        break;
-
-    case ImageType::GRAYMAP:
-        image = this->loadGrayMap();
-        break;
-
-    case ImageType::PIXMAP:
-        image = this->loadPixMap();
-        break;
-
-    default:
-        throw std::invalid_argument("Invalid image format");
-    }
-
-    return image;
 }
 
 bool ImageReader::isDigit(char ch)
@@ -135,47 +108,6 @@ std::vector<std::string> ImageReader::parseString(std::string string)
     return result;
 }
 
-ImageType ImageReader::getTypeOfImage()
-{
-    std::string fileExtension = this->path.substr(path.find_last_of('.') + 1);
-
-    if (fileExtension.size() != EXTENSION_LENGTH || 
-        (fileExtension != "pbm" && fileExtension != "pgm" && fileExtension != "ppm"))
-    {
-        return ImageType::UNKNOWN;
-    }
-
-    std::string firstLine;
-    std::getline(file, firstLine);
-
-    file.seekg(0, std::ios::beg);
-
-    std::string magicNumber = "";
-    magicNumber.push_back(firstLine[0]);
-    magicNumber.push_back(firstLine[1]);
-
-    if ((fileExtension == "pbm" && magicNumber != "P1") ||
-        (fileExtension == "pgm" && magicNumber != "P2") ||
-        (fileExtension == "ppm" && magicNumber != "P3"))
-    {
-        throw std::runtime_error("Mismatch between the file extension and the magic number");
-    }
-
-    switch (magicNumber[1])
-    {
-    case '1':
-        return ImageType::BITMAP;
-
-    case '2':
-        return ImageType::GRAYMAP;
-
-    case '3':
-        return ImageType::PIXMAP;
-    }
-
-    return ImageType::UNKNOWN;
-}
-
 void ImageReader::readData()
 {
     this->file.seekg(MAGIC_NUMBER_LENGTH, std::ios::beg);
@@ -195,132 +127,4 @@ void ImageReader::readData()
             this->data.push_back(dataCurrentLine[i]);
         }
     }
-}
-
-Image* ImageReader::loadBitMap()
-{
-    unsigned int width = std::stoi(this->data[0]);
-    unsigned int height = std::stoi(this->data[1]);
-
-    std::size_t dataSize = this->data.size();
-
-    if ((dataSize - BITMAP_METADATA_COUNT) != (width * height))
-    {
-        throw std::invalid_argument("Corrupted file");
-    }
-
-    std::vector<RGB> pixels;
-    for (std::size_t i = BITMAP_METADATA_COUNT; i < dataSize; ++i)
-    {
-        std::size_t currentSize = this->data[i].size();
-        for (std::size_t j = 0; j < currentSize; ++j)
-        {
-            if (this->data[i][j] == '0')
-            {
-                pixels.push_back(RGB(RGB_WHITE, RGB_WHITE, RGB_WHITE));
-            }
-            else if (this->data[i][j] == '1')
-            {
-                pixels.push_back(RGB(RGB_BLACK, RGB_BLACK, RGB_BLACK));
-            }
-            else
-            {
-                throw std::invalid_argument("Corrupted file");
-            }
-        }
-    }
-
-   return new Image(ImageType::BITMAP, width, height, DEFAULT_MAX_VALUE, pixels);
-}
-
-Image* ImageReader::loadGrayMap()
-{
-    unsigned int width = std::stoi(this->data[0]);
-    unsigned int height = std::stoi(this->data[1]);
-    unsigned int maxValue = std::stoi(this->data[2]);
-
-    if (maxValue > DEFAULT_MAX_VALUE)
-    {
-        throw std::invalid_argument("Corrupted file");
-    }
-
-    std::size_t dataSize = this->data.size();
-
-    if ((dataSize - GRAYMAP_PIXMAP_METADATA_COUNT) != (width * height))
-    {
-        throw std::invalid_argument("Corrupted file");
-    }
-
-    std::vector<RGB> pixels;
-
-    for (std::size_t i = GRAYMAP_PIXMAP_METADATA_COUNT; i < dataSize; ++i)
-    {
-        unsigned int currentNumber = std::stoi(this->data[i]);
-        
-        if (currentNumber > DEFAULT_MAX_VALUE)
-        {
-            throw std::invalid_argument("Corrupted file");
-        }
-        else if (currentNumber > maxValue)
-        {
-            pixels.push_back(RGB(maxValue, maxValue, maxValue));
-        }
-        else
-        {
-            pixels.push_back(RGB(currentNumber, currentNumber, currentNumber));
-        }
-    }
-
-    return new Image(ImageType::GRAYMAP, width, height, maxValue, pixels);
-}
-
-Image* ImageReader::loadPixMap()
-{
-    unsigned int width = std::stoi(this->data[0]);
-    unsigned int height = std::stoi(this->data[1]);
-    unsigned int maxValue = std::stoi(this->data[2]);
-
-    if (maxValue > DEFAULT_MAX_VALUE)
-    {
-        throw std::invalid_argument("Corrupted file");
-    }
-
-    std::size_t dataSize = this->data.size();
-
-    if ((dataSize - GRAYMAP_PIXMAP_METADATA_COUNT) != (width * height * 3))
-    {
-        throw std::invalid_argument("Corrupted file");
-    }
-
-    std::vector<RGB> pixels;
-
-    for (std::size_t i = 3; i < dataSize; i+=3)
-    {
-        unsigned int currentRed = std::stoi(this->data[i]);
-        unsigned int currentGreen = std::stoi(this->data[i+1]);
-        unsigned int currentBlue = std::stoi(this->data[i+2]);
-        if (currentRed > DEFAULT_MAX_VALUE || currentGreen > DEFAULT_MAX_VALUE || currentBlue > DEFAULT_MAX_VALUE)
-        {
-            throw std::invalid_argument("Corrupted file");
-        }
-
-        if (currentRed > maxValue)
-        {
-            currentRed = maxValue;
-        }
-
-        if (currentGreen > maxValue)
-        {
-            currentGreen = maxValue;
-        }
-
-        if (currentBlue > maxValue)
-        {
-            currentBlue = maxValue;
-        }
-
-        pixels.push_back(RGB(currentRed, currentGreen, currentBlue));
-    }
-
-    return new Image(ImageType::PIXMAP, width, height, maxValue, pixels);
 }

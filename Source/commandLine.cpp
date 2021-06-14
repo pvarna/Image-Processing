@@ -1,6 +1,21 @@
 #include "../Headers/commandLine.h"
 #include <stdexcept>
 
+CommandLine::CommandLine(std::string commandLine)
+{
+    if (commandLine.length() == 0)
+    {
+        throw std::invalid_argument("Empty command line!");
+    }
+
+    if (getNumberOfQuotes(commandLine) % 2 == 1)
+    {
+        throw std::invalid_argument("Invalid number of quotes!");
+    }
+
+    this->parseCommandLine(commandLine);
+}
+
 std::size_t CommandLine::getSize() const
 {
     return this->arguments.size();
@@ -22,7 +37,7 @@ std::size_t CommandLine::getNumberOfQuotes(std::string string)
     return counter;
 }
 
-std::string CommandLine::stringToUpper(std::string& string)
+std::string CommandLine::stringToUpper(std::string string)
 {
     std::string result = "";
 
@@ -140,21 +155,6 @@ void CommandLine::parseCommandLine(std::string commandLine)
     removeEmptyArguments(this->arguments);
 
     this->arguments[0] = stringToUpper(this->arguments[0]);
-}
-
-CommandLine::CommandLine(std::string commandLine)
-{
-    if (commandLine.length() == 0)
-    {
-        throw std::invalid_argument("Empty command line!");
-    }
-
-    if (getNumberOfQuotes(commandLine) % 2 == 1)
-    {
-        throw std::invalid_argument("Invalid number of quotes!");
-    }
-
-    this->parseCommandLine(commandLine);
 }
 
 std::string& CommandLine::operator [] (std::size_t index)

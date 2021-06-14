@@ -2,11 +2,35 @@
 #include "../Headers/rgb.h"
 #include "../Headers/enums.h"
 #include "../Headers/imageReader.h"
+#include "../Headers/bitMapReader.h"
+#include "../Headers/grayMapReader.h"
+#include "../Headers/pixMapReader.h"
 #include "../Headers/imageWriter.h"
+#include "../Headers/bitMapWriter.h"
+#include "../Headers/grayMapWriter.h"
+#include "../Headers/pixMapWriter.h"
+#include "../Headers/errorDiffusionAlgorithm.h"
+#include "../Headers/orderedDitheringAlgorithm.h"
+#include "../Headers/fourXFour.h"
+#include "../Headers/eightXEight.h"
+#include "../Headers/errorDiffusionAlgorithm.h"
+#include "../Headers/basicOneDimensional.h"
+#include "../Headers/basicTwoDimensional.h"
+#include "../Headers/floydSteinberg.h"
+#include "../Headers/floydSteinbergFalse.h"
+#include "../Headers/jarvisJudiceNinke.h"
+#include "../Headers/stucki.h"
+#include "../Headers/atkinson.h"
+#include "../Headers/burkes.h"
+#include "../Headers/sierra.h"
+#include "../Headers/sierraTwoRows.h"
+#include "../Headers/sierraLite.h"
+#include "../Headers/imageConverter.h"
 #include <cmath>
 #include <stdexcept>
 #include <vector>
 #include <iostream>
+#include <fstream>
 
 ImageEditor::ImageEditor()
 {
@@ -15,9 +39,68 @@ ImageEditor::ImageEditor()
     this->unsavedChanges = false;
 }
 
+
+void ImageEditor::deallocate()
+{
+    if (this->image)
+    {
+        delete this->image;
+        this->image = nullptr;
+    }
+    this->grayscalePixels.clear();
+}
+
 ImageEditor::~ImageEditor()
 {
     this->deallocate();
+}
+
+ImageType ImageEditor::getTypeOfImage(std::string path)
+{
+    std::ifstream file(path.c_str());
+
+    if (!file.is_open())
+    {
+        throw std::runtime_error("could not open file " + std::string(path));
+    }
+
+    std::string fileExtension = path.substr(path.find_last_of('.') + 1);
+
+    if (fileExtension.size() != EXTENSION_LENGTH || 
+        (fileExtension != "pbm" && fileExtension != "pgm" && fileExtension != "ppm"))
+    {
+        return ImageType::UNKNOWN;
+    }
+
+    std::string firstLine;
+    std::getline(file, firstLine);
+
+    file.seekg(0, std::ios::beg);
+
+    std::string magicNumber = "";
+    magicNumber.push_back(firstLine[0]);
+    magicNumber.push_back(firstLine[1]);
+
+    if ((fileExtension == "pbm" && magicNumber != "P1") ||
+        (fileExtension == "pgm" && magicNumber != "P2") ||
+        (fileExtension == "ppm" && magicNumber != "P3"))
+    {
+        throw std::runtime_error("Mismatch between the file extension and the magic number");
+    }
+
+    switch (magicNumber[1])
+    {
+    case '1':
+        return ImageType::BITMAP;
+
+    case '2':
+        return ImageType::GRAYMAP;
+
+    case '3':
+        return ImageType::PIXMAP;
+    }
+
+    return ImageType::UNKNOWN;
 }
 
 std::string ImageEditor::getCurrentFileName() const
@@ -77,27 +160,6 @@ bool ImageEditor::close()
     return true;
 }
 
-void ImageEditor::deallocate()
-{
-    if (this->image)
-    {
-        delete this->image;
-        this->image = nullptr;
-    }
-    this->grayscalePixels.clear();
-}
-
-void ImageEditor::loadGrayscalePixels()
-{
-    unsigned int width = this->image->getWidth();
-    unsigned int height = this->image->getHeight();
-
-    for (std::size_t i = 0; i < width * height; ++i)
-    {
-        this->grayscalePixels.push_back(this->RGBToGrayscale((*this->image)[i]));
-    }
-}
-
 bool ImageEditor::fileExists(std::string path)
 {
     std::ifstream file(path.c_str());
@@ -110,13 +172,36 @@ bool ImageEditor::fileExists(std::string path)
 
 void ImageEditor::openImage(std::string path)
 {
-    ImageReader reader(path);
+    ImageReader* reader = nullptr;
+    ImageType type = this->getTypeOfImage(path);
 
-    this->image = reader.loadImage();
+    switch (type)
+    {
+    case ImageType::BITMAP:
+        reader = new BitMapReader(path);
+        break;
 
-    this->loadGrayscalePixels();
+    case ImageType::GRAYMAP:
+        reader = new GrayMapReader(path);
+        break;
+
+    case ImageType::PIXMAP:
+        reader = new PixMapReader(path);
+        break;
+
+    default:
+        throw std::invalid_argument("Invalid image format");
+    }
+
+    this->image = reader->loadImage();
+
     this->getFileName(path);
     std::cout << "Successfully opened " << this->currentFileName << std::endl;
+
+    if (reader)
+    {
+        delete reader;
+    }
 }
 
 void ImageEditor::saveImage(std::string path, bool save)
@@ -126,26 +211,23 @@ void ImageEditor::saveImage(std::string path, bool save)
         throw std::invalid_argument("No file is currently opened");
     }
 
-    if (!save)
+    if (!save && this->fileExists(path))
     {
-        if (this->fileExists(path))
+        std::cout << "This file already exists. Are you sure you want to overwrite the data in the file? [Y/n]: ";
+        char choice;
+        do
         {
-            std::cout << "This file already exists. Are you sure you want to overwrite the data in the file? [Y/n]: ";
-            char choice;
-            do
+            std::cin >> choice;
+            std::cin.ignore();
+            if (tolower(choice) != 'y' && tolower(choice) != 'n')
             {
-                std::cin >> choice;
-                std::cin.ignore();
-                if (tolower(choice) != 'y' && tolower(choice) != 'n')
-                {
-                    std::cout << "Invalid choice! Try again [Y/n]: ";
-                }
-            } while (tolower(choice) != 'y' && tolower(choice) != 'n');
-
-            if (tolower(choice) == 'n')
-            {
-                return;
+                std::cout << "Invalid choice! Try again [Y/n]: ";
             }
+        } while (tolower(choice) != 'y' && tolower(choice) != 'n');
+
+        if (tolower(choice) == 'n')
+        {
+            return;
         }
     }
 
@@ -162,358 +244,192 @@ void ImageEditor::saveImage(std::string path, bool save)
         throw std::invalid_argument("Invalid file extension");
     }
 
+
+    ImageConverter converter(this->image);
+    Image* newImage = nullptr;
+
     if (this->image->getType() == ImageType::BITMAP && fileExtension != "pbm")
     {
         if (fileExtension == "pgm")
         {
-            this->convertBitMaptoGrayMap();
+            newImage = converter.bitMaptoGrayMap();
         }
         else if (fileExtension == "ppm")
         {
-            this->convertBitMaptoPixMap();
+            newImage = converter.bitMaptoPixMap();
         }
     }
     else if (this->image->getType() == ImageType::GRAYMAP && fileExtension != "pgm")
     {
         if (fileExtension == "pbm")
         {
-            this->convertGrayMaptoBitMap();
+            newImage = converter.grayMaptoBitMap();
         }
         else if (fileExtension == "ppm")
         {
-            this->convertGrayMaptoPixMap();
+            newImage = converter.grayMaptoPixMap();
         }
     }
     else if (this->image->getType() == ImageType::PIXMAP && fileExtension != "ppm")
     {
         if (fileExtension == "pbm")
         {
-            this->convertPixMaptoBitMap();
+            newImage = converter.pixMaptoBitMap();
         }
         else if (fileExtension == "pgm")
         {
-            this->convertPixMaptoGrayMap();
+            newImage = converter.pixMaptoGrayMap();
         }
     }
 
-    ImageWriter writer(path, this->image);
+    if (newImage)
+    {
+        if (this->image)
+        {
+            delete this->image;
+        }
+        this->image = newImage;
+    }
 
-    writer.saveImage();
+
+    ImageWriter* writer = nullptr;
+
+    switch (this->image->getType())
+    {
+    case ImageType::BITMAP:
+        writer = new BitMapWriter(path, this->image);
+        break;
+
+    case ImageType::GRAYMAP:
+        writer = new GrayMapWriter(path, this->image);
+        break;
+
+    case ImageType::PIXMAP:
+        writer = new PixMapWriter(path, this->image);
+        break;
+    }
+
+    writer->saveImage();
     this->unsavedChanges = false;
     this->getFileName(path);
 
     std::cout << "Successfully saved " << this->currentFileName << std::endl;
+
+    if (writer)
+    {
+        delete writer;
+    }
 }
 
 void ImageEditor::createImage(unsigned int width, unsigned int height, std::string hexColor)
 {
     this->image = new Image(width, height, hexColor);
-    this->loadGrayscalePixels();
     this->currentFileName = "";
     this->unsavedChanges = true;
     std::cout << "Created new document with size " << width << "x" << height << " and filled with " <<  hexColor << std::endl;
 }
 
-int ImageEditor::RGBToGrayscale(RGB color)
+void ImageEditor::errorDiffusionDithering(ErrorDiffusionAlrogithmType alrorithm)
 {
-    int max = std::max(color.red, std::max(color.green, color.blue));
-    int min = std::min(color.red, std::min(color.green, color.blue));
-
-    return static_cast<int>((static_cast<double>(min) + static_cast<double>(max)) / 2);
-}
-
-inline bool ImageEditor::isCloserToZero(int value, int maxValue)
-{
-    return value < (maxValue - value);
-}
-
-inline bool ImageEditor::isInsideTheImage(std::size_t i, std::size_t j, unsigned int height, unsigned int width)
-{
-    return i < height && j < width;
-}
-
-void ImageEditor::getCoefficientTable(ErrorDiffusionAlrogithm algorithm, int coefficients[3][5], 
-                                        bool& isShiftable, int& divisor)
-{
-    switch (algorithm)
+    ErrorDiffusionAlgorithm* alg = nullptr;
+    
+    switch (alrorithm)
     {
-    case ErrorDiffusionAlrogithm::BASIC_ONE_DIMENSIONAL:
-        coefficients[0][3] = 1;
-        isShiftable = false;
-        divisor = 1;
+    case ErrorDiffusionAlrogithmType::BASIC_ONE_DIMENSIONAL:
+        alg = new BasicOneDimensional(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::BASIC_TWO_DIMENSIONAL:
-        coefficients[0][3] = 1;
-        coefficients[1][2] = 1;
-        isShiftable = true;
-        divisor = 1;
+    case ErrorDiffusionAlrogithmType::BASIC_TWO_DIMENSIONAL:
+        alg = new BasicTwoDimensional(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::FLOYD_STEINBERG:
-        coefficients[0][3] = 7;
-        coefficients[1][1] = 3;
-        coefficients[1][2] = 5;
-        coefficients[1][3] = 1;
-        isShiftable = true;
-        divisor = 4;
+    case ErrorDiffusionAlrogithmType::FLOYD_STEINBERG:
+        alg = new FloydSteinberg(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::FLOYD_STEINBERG_FALSE:
-        coefficients[0][3] = 3;
-        coefficients[1][2] = 3;
-        coefficients[1][3] = 2;
-        isShiftable = true;
-        divisor = 3;
+    case ErrorDiffusionAlrogithmType::FLOYD_STEINBERG_FALSE:
+        alg = new FloydSteinbergFalse(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::JARVIS_JUDICE_NINKE:
-        coefficients[0][3] = 7;
-        coefficients[0][4] = 5;
-        coefficients[1][0] = 3;
-        coefficients[1][1] = 5;
-        coefficients[1][2] = 7;
-        coefficients[1][3] = 5;
-        coefficients[1][4] = 3;
-        coefficients[2][0] = 1;
-        coefficients[2][1] = 3;
-        coefficients[2][2] = 5;
-        coefficients[2][3] = 3;
-        coefficients[2][4] = 1;
-        isShiftable = false;
-        divisor = 48;
+    case ErrorDiffusionAlrogithmType::JARVIS_JUDICE_NINKE:
+        alg = new JarvisJudiceNinke(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::STUCKI:
-        coefficients[0][3] = 8;
-        coefficients[0][4] = 4;
-        coefficients[1][0] = 2;
-        coefficients[1][1] = 4;
-        coefficients[1][2] = 8;
-        coefficients[1][3] = 4;
-        coefficients[1][4] = 2;
-        coefficients[2][0] = 1;
-        coefficients[2][1] = 2;
-        coefficients[2][2] = 4;
-        coefficients[2][3] = 2;
-        coefficients[2][4] = 1;
-        isShiftable = false;
-        divisor = 42;
+    case ErrorDiffusionAlrogithmType::STUCKI:
+        alg = new Stucki(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::ATKINSON:
-        coefficients[0][3] = 1;
-        coefficients[0][4] = 1;
-        coefficients[1][1] = 1;
-        coefficients[1][2] = 1;
-        coefficients[1][3] = 1;
-        coefficients[2][2] = 1;
-        isShiftable = true;
-        divisor = 3;
+    case ErrorDiffusionAlrogithmType::ATKINSON:
+        alg = new Atkinson(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::BURKES:
-        coefficients[0][3] = 8;
-        coefficients[0][4] = 4;
-        coefficients[1][0] = 2;
-        coefficients[1][1] = 4;
-        coefficients[1][2] = 8;
-        coefficients[1][3] = 4;
-        coefficients[1][4] = 2;
-        isShiftable = true;
-        divisor = 5;
+    case ErrorDiffusionAlrogithmType::BURKES:
+        alg = new Burkes(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::SIERRA:
-        coefficients[0][3] = 5;
-        coefficients[0][4] = 3;
-        coefficients[1][0] = 2;
-        coefficients[1][1] = 4;
-        coefficients[1][2] = 5;
-        coefficients[1][3] = 4;
-        coefficients[1][4] = 2;
-        coefficients[2][1] = 2;
-        coefficients[2][2] = 3;
-        coefficients[2][3] = 2;
-        isShiftable = true;
-        divisor = 5;
+    case ErrorDiffusionAlrogithmType::SIERRA:
+        alg = new Sierra(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::SIERRA_TWO_ROWS:
-        coefficients[0][3] = 4;
-        coefficients[0][4] = 3;
-        coefficients[1][0] = 1;
-        coefficients[1][1] = 2;
-        coefficients[1][2] = 3;
-        coefficients[1][3] = 2;
-        coefficients[1][4] = 1;
-        isShiftable = true;
-        divisor = 4;
+    case ErrorDiffusionAlrogithmType::SIERRA_TWO_ROWS:
+        alg = new SierraTwoRows(this->image);
         break;
 
-    case ErrorDiffusionAlrogithm::SIERRA_LITE:
-        coefficients[0][3] = 2;
-        coefficients[1][1] = 1;
-        coefficients[1][2] = 1;
-        isShiftable = true;
-        divisor = 2;
+    case ErrorDiffusionAlrogithmType::SIERRA_LITE:
+        alg = new SierraLite(this->image);
         break;
     
     default:
         throw std::invalid_argument("Invalid algorithm");
     }
+
+    Image* newImage = alg->dither();
+    if (this->image)
+    {
+        delete this->image;
+    }
+    this->image = newImage;
+    this->unsavedChanges = true;
+
+    std::cout << "Successfully dithered " << this->currentFileName << std::endl;
+
+    if (alg)
+    {
+        delete alg;
+    }
 }
 
-void ImageEditor::addError(int& pixel, int error, int coefficient, bool isShiftable, int divisor)
+void ImageEditor::orderedDithering(OrderedDitheringAlgorithmType algorithm)
 {
-    if (isShiftable)
+    OrderedDitheringAlgorithm* alg = nullptr;
+    
+    if (algorithm == OrderedDitheringAlgorithmType::FOUR_X_FOUR_BAYER_MATRIX)
     {
-        pixel += ((error * coefficient) >> divisor);
+        alg = new FourXFour(this->image);
+    }
+    else if (algorithm == OrderedDitheringAlgorithmType::EIGHT_X_EIGHT_BAYER_MATRIX)
+    {
+        alg = new EightXEight(this->image);
     }
     else
     {
-        pixel += (error * coefficient/divisor);
+        throw std::invalid_argument("Invalid algorithm");
     }
-}
 
-void ImageEditor::spreadError(std::size_t currentI, std::size_t currentJ, unsigned int height,
-                                unsigned int width, int coefficients[3][5], int error, 
-                                std::vector<int>& pixels, bool isShiftable, int divisor)
-{
-    if (currentI >= height || currentJ >= width)
+    Image* newImage = alg->dither();
+    if (this->image)
     {
-        throw std::invalid_argument("Current pixel is outside the image");
+        delete this->image;
     }
-
-    for (std::size_t i = 0; i < 3; ++i)
-    {
-        for (std::size_t j = 0; j < 5; ++j)
-        {
-            // 2 2
-            if (coefficients[i][j] > 0 && isInsideTheImage(currentI+i, currentJ+j-2, height, width))
-            {
-                addError(pixels[(currentI+i)*width + currentJ+j-2], error, coefficients[i][j], isShiftable, divisor);
-            }
-        }
-    }
-}
-
-void ImageEditor::errorDiffusionDithering(ErrorDiffusionAlrogithm alrorithm)
-{
-    std::vector<RGB> newPixels;
-    ImageType type = this->image->getType();
-    unsigned int width = this->image->getWidth();
-    unsigned int height = this->image->getHeight();
-    unsigned int maxValue = this->image->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int error = 0;
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            int oldPixel = this->grayscalePixels[i*width + j];
-            int newPixel;
-
-            if (isCloserToZero(oldPixel, maxValue))
-            {
-                newPixel = 0;
-            }
-            else
-            {
-                newPixel = maxValue;
-            }
-            error = oldPixel - newPixel;
-
-            int coefficients[3][5] = {};
-            bool isShiftable = true;
-            int divisor = 1;
-            getCoefficientTable(alrorithm, coefficients, isShiftable, divisor);
-            spreadError(i, j, height, width, coefficients, error, grayscalePixels, isShiftable, divisor);
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    Image* ditheredImage = new Image(type, width, height, maxValue, newPixels);  
-    this->deallocate();
-    this->image = ditheredImage;
+    this->image = newImage;
     this->unsavedChanges = true;
-    this->loadGrayscalePixels();
-
-    std::cout << "Successfully dithered " << this->currentFileName << std::endl;
-}
-
-void ImageEditor::orderedDithering(OrderedDitheringAlgorithm algorithm)
-{
-    int fourXfourMatrix[4][4] = 
-    {
-        { 0,  8,  2, 10},
-        {12,  4, 14,  6},
-        { 3, 11,  1,  9},
-        {15,  7, 13,  5}
-    };
-
-    int eightXEightMatrix[8][8] = 
-    {
-        { 0, 32,  8, 40,  2, 34, 10, 42},
-        {48, 16, 56, 24, 50, 18, 58, 26}, 
-        {12, 44,  4, 36, 14, 46,  6, 38}, 
-        {60, 28, 52, 20, 62, 30, 54, 22}, 
-        { 3, 35, 11, 43,  1, 33,  9, 41}, 
-        {51, 19, 59, 27, 49, 17, 57, 25},
-        {15, 47,  7, 39, 13, 45,  5, 37},
-        {63, 31, 55, 23, 61, 29, 53, 21} 
-    };
-
-    std::vector<RGB> newPixels;
-    ImageType type = this->image->getType();
-    unsigned int width = this->image->getWidth();
-    unsigned int height = this->image->getHeight();
-    unsigned int maxValue = this->image->getMaxValue();
-
-    for (std::size_t i = 0; i < height; ++i)
-    {
-        int row = (algorithm == OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX) ? (i % 4) : (i % 8);
-        for (std::size_t j = 0; j < width; ++j)
-        {
-            int column = (algorithm == OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX) ? (j % 4) : (j % 8);
-            int oldPixel = this->grayscalePixels[i*width + j];
-            int newPixel;
-            
-            if (algorithm == OrderedDitheringAlgorithm::FOUR_X_FOUR_BAYER_MATRIX)
-            {
-                if ((oldPixel >> 4) < fourXfourMatrix[row][column])
-                {
-                    newPixel = 0;
-                }
-                else
-                {
-                    newPixel = maxValue;
-                }
-            }
-            else
-            {
-                if ((oldPixel >> 2) < eightXEightMatrix[row][column])
-                {
-                    newPixel = 0;
-                }
-                else
-                {
-                    newPixel = maxValue;
-                }
-            }
-
-            newPixels.push_back(RGB(newPixel, newPixel, newPixel));
-        }
-    }
-
-    Image* ditheredImage = new Image(type, width, height, maxValue, newPixels);  
-    this->deallocate();
-    this->image = ditheredImage;
-    this->unsavedChanges = true;
-    this->loadGrayscalePixels();  
 
     std::cout << "Successfully dithered " << this->currentFileName << std::endl; 
+
+    if (alg)
+    {
+        delete alg;
+    }
 }
 
 void ImageEditor::crop(int x1, int y1, int x2, int y2)
@@ -565,8 +481,7 @@ void ImageEditor::crop(int x1, int y1, int x2, int y2)
     Image* croppedImage = new Image(this->image->getType(), maxX - minX + 1, maxY - minY + 1, this->image->getMaxValue(), croppedPixels);
     this->deallocate();
     this->image = croppedImage;
-    this->unsavedChanges = true;
-    this->loadGrayscalePixels(); 
+    this->unsavedChanges = true; 
 
     std::cout << "Successfully cropped " << this->currentFileName << std::endl;
 }
@@ -598,7 +513,6 @@ void ImageEditor::resize(unsigned int newWidth, unsigned int newHeight)
     this->deallocate();
     this->image = resizedImage;
     this->unsavedChanges = true;
-    this->loadGrayscalePixels(); 
 
     std::cout << "Successfully resized " << this->currentFileName << std::endl;
 }
@@ -614,41 +528,4 @@ void ImageEditor::resize(double percentage)
     unsigned int newHeight = static_cast<unsigned int>(round(static_cast<double>(this->image->getHeight())*percentage/100));
 
     this->resize(newWidth, newHeight);
-}
-
-void ImageEditor::convertBitMaptoGrayMap()
-{
-    this->image->setType(ImageType::GRAYMAP);
-}
-void ImageEditor::convertBitMaptoPixMap()
-{
-    this->image->setType(ImageType::PIXMAP);
-}
-void ImageEditor::convertGrayMaptoBitMap()
-{
-    this->errorDiffusionDithering(DEFAULT_ALGORITHM);
-    this->image->setType(ImageType::BITMAP);
-}
-void ImageEditor::convertGrayMaptoPixMap()
-{
-    this->image->setType(ImageType::PIXMAP);
-}
-void ImageEditor::convertPixMaptoBitMap()
-{
-    this->errorDiffusionDithering(DEFAULT_ALGORITHM);
-    this->image->setType(ImageType::BITMAP);
-}
-void ImageEditor::convertPixMaptoGrayMap()
-{
-    unsigned int width = this->image->getWidth();
-    unsigned int height = this->image->getHeight();
-    for (std::size_t i = 0; i < width * height; ++i)
-    {
-        int grayScale = this->RGBToGrayscale((*this->image)[i]);
-        (*this->image)[i].red = grayScale;
-        (*this->image)[i].green = grayScale;
-        (*this->image)[i].blue = grayScale;
-    }
-
-    this->image->setType(ImageType::GRAYMAP);
 }

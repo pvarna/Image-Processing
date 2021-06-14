@@ -48,13 +48,6 @@ Image::Image(unsigned int width, unsigned int height, std::string hexCode)
     }
 }
 
-/*void Image::print()
-{
-    std::cout << "Magic number: " << this->magicNumber << std::endl;
-    std::cout << "Width: " << this->width << std::endl;
-    std::cout << "Height: " << this->height << std::endl;
-}*/
-
 ImageType Image::getType() const
 {
     return this->type;
@@ -89,8 +82,3 @@ RGB& Image::operator [] (std::size_t index)
 
     return this->pixels[index];
 }
-
-/*Image::~Image()
-{
-    std::cout << "Image destroyed" << std::endl;
-}*/

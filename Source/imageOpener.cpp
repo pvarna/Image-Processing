@@ -6,9 +6,6 @@ ImageOpener::ImageOpener(std::string path, std::ios::openmode mode) : file(path,
     {
         throw std::runtime_error("could not open file " + std::string(path));
     }
-
-    this->path = path;
-    this->type = ImageType::UNKNOWN;
 }
 
 ImageOpener::~ImageOpener()
