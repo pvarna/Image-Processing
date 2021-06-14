@@ -1,5 +1,5 @@
-## Image Processing
-# Project for the Object-Oriented Programming course at FMI
+# Image Processing
+## Project for the Object-Oriented Programming course at FMI
 
 The main task is to create console application to implement of 11 (or 13 :D) algorithms from this article : https://tannerhelland.com/2012/12/28/dithering-eleven-algorithms-source-code.html , to crop and to resize images
 
