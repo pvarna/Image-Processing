@@ -5,7 +5,7 @@ The main task is to create console application to implement all 11 (or 13 :D) al
 
 The program can read image from a file with one of the extensions: .ppm, .pgm, .pbm (only ASCII formats supported, Binary ones to be implemented at a later stage). User can choose one of thirteen dithering algorithms, crop or resize and choose file format for the resulting version of the image.
 
-# Exemple:
+# Example:
 We have this image in ppm format:
 ![Federer](federer.jpg)
 
