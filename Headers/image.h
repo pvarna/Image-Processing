@@ -30,7 +30,7 @@ public:
     //! Constructor with parameters
     Image(ImageType type, unsigned int width, unsigned int height, unsigned int maxValue, std::vector<RGB> pixels);
     
-    //! Constructor with parameters, fills the image with fixec color (hex)
+    //! Constructor with parameters, fills the image with fixed color (hex)
     Image(unsigned int width, unsigned int height, std::string hexCode);
 
     //! Gets the type of the image (BitMap, GrayMap, PixMap)
