@@ -66,9 +66,9 @@ void ErrorDiffusionAlgorithm::spreadError(std::size_t currentI, std::size_t curr
         throw std::invalid_argument("Current pixel is outside the image");
     }
 
-    for (std::size_t i = 0; i < 3; ++i)
+    for (std::size_t i = 0; i < COEFFIIENT_TABLE_HEIGHT; ++i)
     {
-        for (std::size_t j = 0; j < 5; ++j)
+        for (std::size_t j = 0; j < COEFFIIENT_TABLE_WIDTH; ++j)
         {
             // 2 2
             if (this->table[i][j] > 0 && this->isInsideTheImage(currentI+i, currentJ+j-2, height, width))

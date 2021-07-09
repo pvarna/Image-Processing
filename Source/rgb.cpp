@@ -59,7 +59,6 @@ RGB::RGB(std::string hexCode)
     {
         if (!isDigit(hexCode[i]) && !isHexLetter(hexCode[i]))
         {
-            std::cout << hexCode[i] << std::endl;
             throw std::invalid_argument("Invalid hex code");
         }
     }

@@ -95,7 +95,7 @@ bool ImageProcessor::isValid(CommandLine command)
 
     if (mainCommand == "NEW")
     {
-        if (size != 4)
+        if (size != FOUR_ARGUMENTS)
         {
             std::cout << "Invalid number of arguments (type \'help\' to see all valid commands)" << std::endl;
             return false;
